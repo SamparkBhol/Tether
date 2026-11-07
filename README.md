@@ -6,6 +6,8 @@ Tether turns "can your team do this for us?" into a date both teams agree on, an
 
 It lives inside Jira, Confluence and Rovo. There is no new tool to learn and no new board to keep up to date.
 
+The context comes from what Atlassian already knows: which team owns each space, which goals a piece of work serves, how fast each team really finishes work and who is waiting on whom. The confidence is literal. Every promise carries the odds of landing on time, and Tether keeps score of whether those odds turned out to be honest.
+
 ## Why
 
 Most launches don't slip because one team is slow. They slip because one team needed a review, an API or a sign-off from another team, asked for it in a chat thread, got a "sure, should be fine" and planned around it. Weeks later the date quietly moves and nobody downstream finds out until it is too late.
