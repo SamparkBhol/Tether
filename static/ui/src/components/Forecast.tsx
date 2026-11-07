@@ -190,7 +190,7 @@ const Receipt = ({ inputs, team = 'They', windowEnd }: { inputs: ForecastInputs;
   return (
     <div className="fc-receipt">
       <span className="fc-term">
-        <b>{r(perWeek)}</b> items a week
+        <b>{r(perWeek)}</b> item{r(perWeek) === 1 ? '' : 's'} a week
         <small>{team}'s pace</small>
       </span>
       <span className="fc-op">×</span>
@@ -200,7 +200,7 @@ const Receipt = ({ inputs, team = 'They', windowEnd }: { inputs: ForecastInputs;
       </span>
       <span className="fc-op">=</span>
       <span className="fc-term">
-        <b>{r(askWeek)}</b> ask items a week
+        <b>{r(askWeek)}</b> ask item{r(askWeek) === 1 ? '' : 's'} a week
       </span>
       <span className="fc-op">for</span>
       <span className="fc-term">

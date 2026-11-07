@@ -89,7 +89,7 @@ export const replan = (
       size: c.terms.size,
       dueDay,
       upstream: gate ? { samples: gate, lagDays: INTEGRATION_LAG } : undefined,
-      seed: hashSeed(c.id, dayKey),
+      seed: hashSeed(c.id, dayKey.slice(0, 10)),
     });
     out.set(id, {
       id,

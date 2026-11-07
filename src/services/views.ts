@@ -4,7 +4,6 @@ import type { Commitment, Side, Team } from '../domain/types';
 import { calibrate, reliability } from '../engine/forecast/calibration';
 import { fromDay, toDay } from '../engine/forecast/calendar';
 import { simulate } from '../engine/forecast/montecarlo';
-import { hashSeed } from '../engine/forecast/random';
 import { sizeAhead } from '../engine/negotiate/queue';
 import { toQueueItem } from '../engine/propagate/replan';
 import { asApp } from '../jira/client';
@@ -12,7 +11,7 @@ import { getIssue, getIssues } from '../jira/issues';
 import { todayIso, unique } from '../lib/util';
 import { forOwner, forRequester, getCommitment, recent, touchingIssues } from '../store/commitments';
 import { allTeams, eventsFor, getAsks, outcomesFor, snapshotsFor } from '../store/records';
-import { forecastCommitment, negotiateFor, ownerQueue } from './forecasting';
+import { commitmentSeed, forecastCommitment, negotiateFor, ownerQueue } from './forecasting';
 import { loadModel } from './model';
 import type { Scope } from './scope';
 import { myTeamIds, requireTeam } from './teams';
@@ -177,7 +176,7 @@ export const detailView = async (s: Scope, id: string) => {
     itemsAhead: sizeAhead(queue, item),
     size: c.terms.size,
     dueDay: toDay(c.terms.dueDate),
-    seed: hashSeed(c.id, todayIso()),
+    seed: commitmentSeed(c.id),
   });
   const negotiation = isPending(c.state) || c.state === 'at_risk' ? await negotiateFor(item, model, c.id) : null;
   const keys = [c.sourceIssueKey, c.ownerIssueKey].filter((k): k is string => !!k);

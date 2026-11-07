@@ -29,10 +29,21 @@ export const forecaster = (model: TeamModelView, key: string): Forecaster => {
     });
 };
 
+export const commitmentSeed = (id: string) => hashSeed(id, todayIso());
+
 export const forecastCommitment = async (c: Commitment, model: TeamModelView): Promise<SimulationResult> => {
   const queue = await ownerQueue(c.ownerTeamId, c.id);
-  const item = toQueueItem(c);
-  return forecaster(model, c.id)(sizeAhead(queue, item), c.terms.size, toDay(c.terms.dueDate), 'current');
+  return simulate({
+    today: toDay(todayIso()),
+    calendar: model.policy,
+    throughput: model.throughput,
+    declaredDailyCapacity: model.policy.declaredDailyCapacity,
+    askShare: model.policy.askShare,
+    itemsAhead: sizeAhead(queue, toQueueItem(c)),
+    size: c.terms.size,
+    dueDay: toDay(c.terms.dueDate),
+    seed: commitmentSeed(c.id),
+  });
 };
 
 export const negotiateFor = async (
