@@ -116,7 +116,12 @@ export const draftAsk = async (s: Scope, input: AskInput): Promise<Draft> => {
     neededBy: input.neededBy,
     size,
     negotiation,
-    model: { basis: model.basis, windowEnd: model.windowEnd, perWeek: model.summary.perWeek, askShare: model.policy.askShare },
+    model: {
+      basis: model.basis,
+      windowEnd: model.windowEnd,
+      perWeek: model.basis === 'declared' ? model.policy.declaredDailyCapacity * 5 : model.summary.perWeek,
+      askShare: model.policy.askShare,
+    },
     duplicateOf,
     cycle,
     existingWork,

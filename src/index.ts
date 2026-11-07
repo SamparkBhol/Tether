@@ -12,4 +12,6 @@ export {
   decline,
   whatIf,
   mine,
+  withdraw,
+  policy,
 } from './handlers/actions';

@@ -70,6 +70,7 @@ modules:
         - replan-skill
       actions:
         - commitment-status
+        - withdraw-ask
     - key: tether-desk-agent
       name: Tether Desk
       description: Answer asks from other teams without overpromising. Recommends
@@ -85,6 +86,8 @@ modules:
       skills:
         - negotiate-skill
         - replan-skill
+      actions:
+        - update-team-policy
 
   rovo:skill:
     - key: ask-skill
@@ -131,6 +134,8 @@ modules:
         - decline-ask
         - slip-impact
         - my-commitments
+        - withdraw-ask
+        - update-team-policy
 
   action:
     - key: find-team
@@ -355,6 +360,53 @@ modules:
           type: string
           required: false
           description: Limit to one work item. Omit for everything.
+    - key: withdraw-ask
+      name: Withdraw an ask
+      function: a-withdraw
+      actionVerb: UPDATE
+      description: Withdraws an ask or a commitment the user's team no longer needs, so the owning team stops working on it. Only call after the user confirms.
+      inputs:
+        commitmentId:
+          title: Commitment id
+          type: string
+          required: true
+          description: The commitment to withdraw.
+        reason:
+          title: Reason
+          type: string
+          required: false
+          description: Why it is no longer needed.
+    - key: update-team-policy
+      name: Update team policy
+      function: a-policy
+      actionVerb: UPDATE
+      description: Changes how a team's forecasts work, for example its share of time on other teams' asks or its weekly capacity when it has no history. Only for people who can work in that team's space. Only call after the user confirms the new numbers.
+      inputs:
+        team:
+          title: Team
+          type: string
+          required: true
+          description: Team name or space key.
+        askSharePct:
+          title: Share on asks
+          type: number
+          required: false
+          description: Percent of the team's time that goes to other teams' asks, for example 35.
+        weeklyCapacity:
+          title: Weekly capacity
+          type: number
+          required: false
+          description: Items the team finishes in a week, used when it has no history in Jira.
+        promiseAtPct:
+          title: Promise at
+          type: number
+          required: false
+          description: Confidence the team promises at, for example 85.
+        atRiskBelowPct:
+          title: At risk below
+          type: number
+          required: false
+          description: Confidence below which a promise is flagged at risk, for example 60.
 
   trigger:
     - key: issue-events
@@ -420,6 +472,10 @@ modules:
       handler: index.whatIf
     - key: a-mine
       handler: index.mine
+    - key: a-withdraw
+      handler: index.withdraw
+    - key: a-policy
+      handler: index.policy
 
 resources:
   - key: ui

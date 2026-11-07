@@ -62,6 +62,7 @@ export const replan = (
   models: Map<string, TeamModel>,
   today: number,
   dayKey: string,
+  pinned: Map<string, number> = new Map(),
 ): Map<string, Replanned> => {
   const byId = new Map(commitments.map((c) => [c.id, c]));
   const queues = new Map<string, QueueItem[]>();
@@ -91,6 +92,8 @@ export const replan = (
       upstream: gate ? { samples: gate, lagDays: INTEGRATION_LAG } : undefined,
       seed: hashSeed(c.id, dayKey.slice(0, 10)),
     });
+    const pin = pinned.get(id);
+    if (pin !== undefined) for (let i = 0; i < result.samples.length; i++) if (result.samples[i] < pin) result.samples[i] = pin;
     out.set(id, {
       id,
       result,

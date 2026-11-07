@@ -139,7 +139,7 @@ export const deskView = async (s: Scope, teamId: string) => {
     model: {
       basis: model.basis,
       windowEnd: model.windowEnd ?? null,
-      perWeek: Math.round(model.summary.perWeek * 10) / 10,
+      perWeek: Math.round((model.basis === 'declared' ? model.policy.declaredDailyCapacity * 5 : model.summary.perWeek) * 10) / 10,
       completed: model.summary.completed,
       askShare: model.policy.askShare,
       shareSource: model.shareSource,

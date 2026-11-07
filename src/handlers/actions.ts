@@ -13,7 +13,10 @@ import { day } from '../services/notify';
 import { findTeams, myTeamIds, syncTeams } from '../services/teams';
 import { deskView, detailView, panelView } from '../services/views';
 import { getCommitment, openCommitments, touchingIssues } from '../store/commitments';
-import { getTeam } from '../store/records';
+import { getPolicy, getTeam, savePolicy } from '../store/records';
+import { access } from '../services/access';
+import { enqueue } from '../services/queue';
+import { forgetThroughput } from '../services/model';
 import { guard, issueKeyFrom, num, scopeFromAction, str, type ActionPayload, type InvocationContext } from './shared';
 
 const pct = (p?: number | null) => (p === undefined || p === null ? null : Math.round(p * 100));
@@ -224,7 +227,7 @@ export const whatIf = guard('slip-impact', async (p: ActionPayload, ctx: Invocat
   const newDate = str(p.newDate);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) throw invalid('Give the new date like 2026-12-18.');
   const open = (await openCommitments()).filter((x) => isOpen(x.state));
-  const shifted = open.map((x) => (x.id === c.id ? { ...x, terms: { ...x.terms, dueDate: newDate }, confidence: 1 } : x));
+  const shifted = open;
   const graph = await graphFor(shifted);
   const models = new Map<string, TeamModel>();
   for (const id of new Set(shifted.map((x) => x.ownerTeamId))) {
@@ -234,7 +237,7 @@ export const whatIf = guard('slip-impact', async (p: ActionPayload, ctx: Invocat
     models.set(id, { policy: m.policy, throughput: m.throughput });
   }
   const before = replan(open, await graphFor(open), models, toDay(todayIso()), `${todayIso()}:base`);
-  const after = replan(shifted, graph, models, toDay(todayIso()), `${todayIso()}:what-if`);
+  const after = replan(shifted, graph, models, toDay(todayIso()), `${todayIso()}:what-if`, new Map([[c.id, toDay(newDate)]]));
   const downstream = reachDownstream(graph, c.id);
   const byId = new Map(open.map((x) => [x.id, x]));
   const n = await names(s);
@@ -255,14 +258,54 @@ export const whatIf = guard('slip-impact', async (p: ActionPayload, ctx: Invocat
 
 export const mine = guard('my-commitments', async (p: ActionPayload, ctx: InvocationContext) => {
   const s = scopeFromAction(p, ctx);
-  const ids = await myTeamIds(s);
   const n = await names(s);
   const key = issueKeyFrom(p);
-  const rows = key ? await touchingIssues([key]) : (await openCommitments()).filter((c) => ids.includes(c.ownerTeamId) || ids.includes(c.requesterTeamId));
+  const pool = key ? await touchingIssues([key]) : await openCommitments();
+  const ids = await access(s).acting(pool.flatMap((c) => [c.ownerTeamId, c.requesterTeamId]));
+  const rows = pool.filter((c) => ids.includes(c.ownerTeamId) || ids.includes(c.requesterTeamId));
   return {
     ok: true,
     yourTeams: ids.map((id) => n.get(id) ?? id),
     weOwe: rows.filter((c) => ids.includes(c.ownerTeamId)).map((c) => brief(c, n)),
     weAreWaitingOn: rows.filter((c) => ids.includes(c.requesterTeamId)).map((c) => brief(c, n)),
+  };
+});
+
+export const withdraw = guard('withdraw-ask', async (p: ActionPayload, ctx: InvocationContext) => {
+  const s = scopeFromAction(p, ctx);
+  const c = await load(p);
+  const next = await actAsUser(s, c.id, { kind: 'withdraw', reason: str(p.reason) || undefined }, 'requester');
+  return { ok: true, commitment: brief(next, await names(s)) };
+});
+
+export const policy = guard('update-team-policy', async (p: ActionPayload, ctx: InvocationContext) => {
+  const s = scopeFromAction(p, ctx);
+  const teams = await syncTeams(s);
+  const team = findTeams(teams.filter((t) => t.spaceKeys.length), str(p.team))[0];
+  if (!team) throw invalid('Which team? Give its name or space key.');
+  if (!(await access(s).canActFor(team))) throw invalid(`Only people who can work in ${team.name}'s space can change its policy.`);
+  const cur = await getPolicy(team.id);
+  const pctOr = (v: unknown, d: number) => (v === undefined || v === '' ? d : num(v, d * 100) / 100);
+  const next = {
+    ...cur,
+    askShare: pctOr(p.askSharePct, cur.askShare),
+    declaredDailyCapacity: p.weeklyCapacity === undefined || p.weeklyCapacity === '' ? cur.declaredDailyCapacity : num(p.weeklyCapacity, cur.declaredDailyCapacity * 5) / 5,
+    targetConfidence: pctOr(p.promiseAtPct, cur.targetConfidence),
+    riskThreshold: pctOr(p.atRiskBelowPct, cur.riskThreshold),
+  };
+  const saved = await savePolicy(next, s.accountId ?? 'agent');
+  if (!saved) throw invalid('Someone changed this policy a moment ago. Try again.');
+  await forgetThroughput(team.id);
+  await enqueue({ kind: 'replan', reason: 'policy', teams: [team.id] }, 2);
+  return {
+    ok: true,
+    team: team.name,
+    policy: {
+      askSharePct: Math.round(saved.askShare * 100),
+      weeklyCapacity: Math.round(saved.declaredDailyCapacity * 5 * 10) / 10,
+      promiseAtPct: Math.round(saved.targetConfidence * 100),
+      atRiskBelowPct: Math.round(saved.riskThreshold * 100),
+    },
+    note: 'Forecasts for this team update within a minute.',
   };
 });
