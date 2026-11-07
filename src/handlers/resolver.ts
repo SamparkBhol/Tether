@@ -11,6 +11,7 @@ import { myTeamIds, pinTeam, syncTeams } from '../services/teams';
 import { deskView, detailView, ledgerView, panelView } from '../services/views';
 import { sampleStatus } from '../services/sample';
 import { getTeam, savePolicy } from '../store/records';
+import { recent } from '../store/commitments';
 import { access } from '../services/access';
 import { friendly } from './shared';
 
@@ -39,10 +40,12 @@ def('bootstrap', async (r) => {
   const teams = await syncTeams(s, !!r.payload.refresh);
   const project = contextProject(r);
   const here = project ? teams.find((t) => t.spaceKeys.includes(project)) : undefined;
+  const involved = new Set((await recent(200)).flatMap((c) => [c.ownerTeamId, c.requesterTeamId]));
   return {
     accountId: s.accountId,
     teams: teams
       .filter((t) => t.spaceKeys.length > 0)
+      .sort((a, b) => Number(involved.has(b.id)) - Number(involved.has(a.id)) || a.name.localeCompare(b.name))
       .map((t) => ({ id: t.id, name: t.name, source: t.source, spaceKeys: t.spaceKeys, avatarUrl: t.avatarUrl })),
     myTeams: mine,
     here: here?.id ?? null,
