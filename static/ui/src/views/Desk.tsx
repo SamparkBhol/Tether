@@ -23,7 +23,7 @@ interface Policy {
 interface DeskData {
   team: TeamLite;
   member: boolean;
-  model: { basis: string; windowEnd: string | null; perWeek: number; completed: number; askShare: number; policy: Policy };
+  model: { basis: string; windowEnd: string | null; perWeek: number; completed: number; askShare: number; shareSource: string; learnedFrom: number; policy: Policy };
   calibration: { samples: number; brier: number | null; hitRate: number | null; verdict: string };
   reliability: number | null;
   inbox: (Card & { detail: string; channel: string; agentClient: string | null; negotiation: Negotiation | null })[];
@@ -44,7 +44,7 @@ const honesty = (c: DeskData['calibration']) =>
 const pace = (d: DeskData) =>
   d.model.basis === 'declared'
     ? `No recent finished work in ${d.team.spaceKeys.join(', ')}, so forecasts use the capacity below.`
-    : `Finishes about ${d.model.perWeek} items a week${d.model.basis === 'past' && d.model.windowEnd ? ` (history up to ${dayLabel(d.model.windowEnd)})` : ''}, about ${Math.round(d.model.askShare * 100)}% of it on asks from other teams.`;
+    : `Finishes about ${d.model.perWeek} items a week${d.model.basis === 'past' && d.model.windowEnd ? ` (history up to ${dayLabel(d.model.windowEnd)})` : ''}, about ${Math.round(d.model.askShare * 100)}% of it on asks from other teams${d.model.shareSource === 'learned' ? ` (learned from ${d.model.learnedFrom} finished asks)` : ''}.`;
 
 const PolicyForm = ({ policy, onSaved }: { policy: Policy; onSaved: () => void }) => {
   const [p, setP] = useState(policy);
@@ -84,6 +84,7 @@ const PolicyForm = ({ policy, onSaved }: { policy: Policy; onSaved: () => void }
       </label>
       <label>
         <span>Time spent on other teams' asks</span>
+        <span className="muted small">Used until Tether has seen 8 finished asks, then it learns the real share.</span>
         <input type="number" min={5} max={100} value={Math.round(p.askShare * 100)} onChange={(e) => set('askShare', Number(e.target.value) / 100)} />
         <span className="muted small">%</span>
       </label>

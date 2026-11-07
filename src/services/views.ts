@@ -142,6 +142,8 @@ export const deskView = async (s: Scope, teamId: string) => {
       perWeek: Math.round(model.summary.perWeek * 10) / 10,
       completed: model.summary.completed,
       askShare: model.policy.askShare,
+      shareSource: model.shareSource,
+      learnedFrom: model.learnedFrom,
       policy: model.policy,
     },
     calibration: calibrate(outcomes.map((o) => ({ predicted: o.predicted, hit: o.hit }))),

@@ -120,12 +120,12 @@ export const getIssues = async (as: As, keys: string[]): Promise<IssueLite[]> =>
   return out;
 };
 
-export const completions = async (as: As, projectKeys: string[], cap = 400): Promise<string[]> => {
+export const completions = async (as: As, projectKeys: string[], cap = 400, label?: string): Promise<string[]> => {
   if (!projectKeys.length) return [];
   const keys = projectKeys.map((k) => `"${k}"`).join(',');
   const rows = await search(
     as,
-    `project in (${keys}) AND statusCategory = Done ORDER BY statusCategoryChangedDate DESC`,
+    `project in (${keys}) AND statusCategory = Done${label ? ` AND labels = "${label}"` : ''} ORDER BY statusCategoryChangedDate DESC`,
     'statuscategorychangedate,resolutiondate',
     cap,
   );

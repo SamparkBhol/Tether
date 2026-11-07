@@ -16,6 +16,8 @@ export interface TeamModelView {
   basis: Basis;
   windowEnd?: string;
   summary: ThroughputSummary;
+  shareSource: 'learned' | 'policy';
+  learnedFrom: number;
 }
 
 const cacheKey = (teamId: string) => kvKey('throughput', teamId);
@@ -32,20 +34,33 @@ const completionDates = async (team: Team): Promise<string[]> => {
 
 export const forgetThroughput = (teamId: string) => kvs.delete(cacheKey(teamId));
 
+const learnedShare = async (team: Team, total: number) => {
+  const key = kvKey('asks-done', team.id);
+  let done = await kvs.get<number>(key);
+  if (done === undefined) {
+    done = (await completions(asApp, team.spaceKeys, 200, 'tether')).length;
+    await kvs.set(key, done, { ttl: { value: 6, unit: 'HOURS' } });
+  }
+  return done >= 8 && total > 0 ? { share: Math.min(0.9, Math.max(0.05, done / total)), from: done } : null;
+};
+
 export const loadModel = async (team: Team): Promise<TeamModelView> => {
-  const policy = await getPolicy(team.id);
+  const stated = await getPolicy(team.id);
   const dates = await completionDates(team);
+  const learned = await learnedShare(team, dates.length);
+  const policy = learned ? { ...stated, askShare: learned.share } : stated;
+  const extra = { shareSource: (learned ? 'learned' : 'policy') as 'learned' | 'policy', learnedFrom: learned?.from ?? 0 };
   const today = toDay(todayIso());
   const live = sampleThroughput(dates, policy, today);
   const liveSummary = summarise(live);
-  if (liveSummary.enoughHistory) return { team, policy, throughput: live, basis: 'live', summary: liveSummary };
+  if (liveSummary.enoughHistory) return { team, policy, throughput: live, basis: 'live', summary: liveSummary, ...extra };
 
   const latest = dates.length ? Math.max(...dates.map(toDay)) : null;
   if (latest !== null && today - latest > STALE_AFTER_DAYS) {
     const past = sampleThroughput(dates, policy, latest + 1);
     const pastSummary = summarise(past);
     if (pastSummary.enoughHistory)
-      return { team, policy, throughput: past, basis: 'past', windowEnd: fromDay(latest), summary: pastSummary };
+      return { team, policy, throughput: past, basis: 'past', windowEnd: fromDay(latest), summary: pastSummary, ...extra };
   }
-  return { team, policy, throughput: null, basis: 'declared', summary: liveSummary };
+  return { team, policy, throughput: null, basis: 'declared', summary: liveSummary, ...extra };
 };
