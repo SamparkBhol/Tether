@@ -23,6 +23,7 @@ export interface Terms {
   dueDate: string;
   scope: string;
   size: number;
+  confidence?: number;
 }
 
 export interface Card {

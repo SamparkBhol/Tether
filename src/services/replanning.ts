@@ -110,7 +110,7 @@ export const replanAll = async (s: Scope, reason: string) => {
         fresh.id,
         {
           kind: 'renegotiate',
-          terms: { dueDate: option.dueDate, scope: fresh.terms.scope, size: option.size },
+          terms: { dueDate: option.dueDate, scope: fresh.terms.scope, size: option.size, confidence: round(option.confidence, 4) },
           reason: why.join(' '),
         },
         SYSTEM,

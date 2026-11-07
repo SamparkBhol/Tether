@@ -1,4 +1,4 @@
-import { useCall } from '../api';
+import { call, useCall } from '../api';
 import { dayLabel, pct } from '../format';
 import type { Card, CurvePoint, Negotiation } from '../types';
 import { ActionBar } from './ActionBar';
@@ -49,14 +49,42 @@ export const Detail = ({ id, teamName, onChanged }: { id: string; teamName: (id:
   if (error) return <Problem message={error} onRetry={reload} />;
   if (!data) return null;
   const c = data.commitment;
+  const requesterMove = c.state === 'renegotiating' || c.state === 'countered';
+  const joinTeam = requesterMove ? c.requester : c.state === 'proposed' ? c.owner : null;
+  const needsJoin = !!joinTeam && !c.actions.some((a) => ['accept', 'acceptRenegotiation', 'counter'].includes(a));
   return (
     <div className="detail">
-      <Curve points={data.forecast.curve} neededBy={c.neededBy} due={c.terms.dueDate} dueConfidence={data.forecast.probability} />
+      {c.pendingTerms && (c.state === 'renegotiating' || c.state === 'countered') && c.pendingTerms.confidence !== undefined ? (
+        <Curve
+          points={data.forecast.curve}
+          neededBy={c.terms.dueDate}
+          neededConfidence={data.forecast.probability}
+          due={c.pendingTerms.dueDate}
+          dueConfidence={c.pendingTerms.confidence}
+        />
+      ) : (
+        <Curve points={data.forecast.curve} neededBy={c.neededBy} due={c.terms.dueDate} dueConfidence={data.forecast.probability} />
+      )}
       <p className="detail-basis">
         {basisLine(data.forecast.basis, data.forecast.windowEnd, data.forecast.itemsAhead)} Half the time it lands by {dayLabel(data.forecast.dates.p50)}, and 85% of
         the time by {dayLabel(data.forecast.dates.p85)}.
       </p>
       {data.negotiation && c.state !== 'committed' && <Options negotiation={data.negotiation} teamName={teamName} />}
+      {needsJoin && joinTeam && (
+        <p className="join-hint">
+          Only {joinTeam.name} can answer this.{' '}
+          <button
+            className="link"
+            onClick={async () => {
+              await call('pin', { teamId: joinTeam.id, on: true });
+              onChanged();
+              void reload();
+            }}
+          >
+            I'm on {joinTeam.name}
+          </button>
+        </p>
+      )}
       <ActionBar
         card={c}
         suggestion={data.negotiation && data.negotiation.recommended.kind !== 'as_asked' ? data.negotiation.recommended : null}

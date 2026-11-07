@@ -15,7 +15,9 @@ interface Props {
 export const Row = ({ card, perspective, teamName, onChanged, open = false }: Props) => {
   const [expanded, setExpanded] = useState(open);
   const other = perspective === 'owner' ? card.requester : card.owner;
-  const due = card.pendingTerms && (card.state === 'renegotiating' || card.state === 'countered') ? card.pendingTerms.dueDate : card.terms.dueDate;
+  const proposing = !!card.pendingTerms && (card.state === 'renegotiating' || card.state === 'countered');
+  const due = proposing ? card.pendingTerms!.dueDate : card.terms.dueDate;
+  const odds = proposing && card.pendingTerms!.confidence !== undefined ? card.pendingTerms!.confidence : card.confidence;
   return (
     <li className={`row row-${card.state}`}>
       <button className="row-head" aria-expanded={expanded} onClick={() => setExpanded((v) => !v)}>
@@ -28,8 +30,11 @@ export const Row = ({ card, perspective, teamName, onChanged, open = false }: Pr
           </span>
         </span>
         <span className="row-when">
-          <span className="row-date">{dayLabel(due)}</span>
-          <Odds p={card.confidence} />
+          <span className="row-date" title={proposing ? `Was ${dayLabel(card.terms.dueDate)}` : undefined}>
+            {proposing && <span className="row-was">{dayLabel(card.terms.dueDate)}</span>}
+            {dayLabel(due)}
+          </span>
+          <Odds p={odds} />
         </span>
       </button>
       {expanded && (

@@ -177,7 +177,7 @@ export const detailView = async (s: Scope, id: string) => {
     itemsAhead: sizeAhead(queue, item),
     size: c.terms.size,
     dueDay: toDay(c.terms.dueDate),
-    seed: hashSeed(c.id, 'detail', todayIso()),
+    seed: hashSeed(c.id, todayIso()),
   });
   const negotiation = isPending(c.state) || c.state === 'at_risk' ? await negotiateFor(item, model, c.id) : null;
   const keys = [c.sourceIssueKey, c.ownerIssueKey].filter((k): k is string => !!k);

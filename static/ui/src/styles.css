@@ -833,3 +833,18 @@ textarea {
   color: var(--t-muted);
   font: inherit;
 }
+
+.row-was {
+  margin-right: var(--ds-space-075, 6px);
+  color: var(--t-faint);
+  font-weight: 400;
+  text-decoration: line-through;
+}
+
+.join-hint {
+  margin: var(--ds-space-100, 8px) 0 0;
+  padding: var(--ds-space-100, 8px) var(--ds-space-150, 12px);
+  border-radius: var(--t-radius);
+  background: var(--ds-background-accent-yellow-subtlest, #fff7d6);
+  color: var(--ds-text-accent-yellow-bolder, #533f04);
+}

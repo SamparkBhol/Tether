@@ -21,7 +21,7 @@ export const broadcast = async (c: Commitment, kind: string) => {
   }
 };
 
-const pct = (p?: number) => (p === undefined ? 'unknown' : `${Math.round(p * 100)}%`);
+const pct = (p?: number) => (p === undefined ? 'unknown' : p >= 0.995 ? '99%+' : `${Math.round(p * 100)}%`);
 
 export const day = (iso: string) =>
   new Date(iso + 'T00:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
@@ -104,6 +104,7 @@ export const tellRenegotiation = (
         paragraph(
           text('Tether proposes '),
           strong(day(c.pendingTerms?.dueDate ?? c.terms.dueDate)),
+          text(c.pendingTerms?.confidence !== undefined ? ` (${pct(c.pendingTerms.confidence)} likely)` : ''),
           text(c.pendingTerms && c.pendingTerms.size < c.terms.size ? ` for the first ${c.pendingTerms.size} items` : ''),
           text('. Accept it or keep the old date from the Tether panel.'),
         ),

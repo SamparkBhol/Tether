@@ -47,7 +47,7 @@ export const Curve = ({ points, neededBy, due, target = 0.85, height = 168, labe
   }, [points, neededBy, due, H]);
 
   if (!geo) return <div className="curve-empty">No forecast yet.</div>;
-  const neededP = neededBy ? (neededConfidence ?? probabilityAt(points, neededBy)) : null;
+  const neededP = neededBy ? (neededConfidence ?? (due === neededBy ? dueConfidence : undefined) ?? probabilityAt(points, neededBy)) : null;
   const dueP = due ? (due === neededBy && neededConfidence !== undefined ? neededConfidence : (dueConfidence ?? probabilityAt(points, due))) : null;
   const summary =
     label ??

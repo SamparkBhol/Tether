@@ -164,7 +164,7 @@ export const Desk = ({ boot, teamId, onPinned }: { boot: Bootstrap; teamId: stri
       )}
 
       <Section title="What you've promised">
-        {data.promised.length ? (
+        {data.promised.some((c) => c.state === 'committed') ? (
           <ul className="rows">
             {data.promised
               .filter((c) => c.state === 'committed')
@@ -173,7 +173,7 @@ export const Desk = ({ boot, teamId, onPinned }: { boot: Bootstrap; teamId: stri
               ))}
           </ul>
         ) : (
-          <Empty title="No open promises" />
+          <Empty title={atRisk.length ? 'Everything else is on track' : 'No open promises'} />
         )}
       </Section>
 

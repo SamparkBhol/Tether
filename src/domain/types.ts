@@ -35,6 +35,7 @@ export interface Terms {
   dueDate: IsoDate;
   scope: string;
   size: number;
+  confidence?: number;
 }
 
 export interface Ask {
