@@ -14,6 +14,8 @@ Most launches don't slip because one team is slow. They slip because one team ne
 
 Big companies solve this with dependency contracts in tools like Jira Align. Everyone else has a spreadsheet, a standup and hope.
 
+The signs are easy to find. In Atlassian's [State of Teams 2025](https://www.atlassian.com/blog/state-of-teams-2025) research with 12,000 knowledge workers and 200 executives, leaders and teams said they waste a quarter of their time just searching for answers. Inside Jira, the views that show dependencies across teams belong to [Plans, which needs Jira Premium or Enterprise](https://support.atlassian.com/jira-software-cloud/docs/what-is-advanced-roadmaps/). A long standing [suggestion for cross project dependencies](https://jira.atlassian.com/browse/JSWCLOUD-17623) calls the native setup so cumbersome that it is usually not used, and the same question keeps coming back on the [Atlassian Community](https://community.atlassian.com/forums/Jira-questions/How-can-I-manage-cross-team-dependencies-more-effectively-in/qaq-p/2973402).
+
 Tether gives every team on Jira Cloud the same thing, and adds the part that was always missing, a forecast both sides can trust.
 
 ## How it works
