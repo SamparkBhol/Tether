@@ -90,6 +90,9 @@ export const apply = async (
     next.committedConfidence = p;
   }
 
+  if (next.pendingTerms && (action.kind === 'counter' || action.kind === 'repropose' || action.kind === 'renegotiate'))
+    next.pendingTerms = { ...next.pendingTerms, confidence: await confidenceNow({ ...next, terms: next.pendingTerms }, owner) };
+
   await saveCommitment(next, before.version);
   await appendEvent({ ...event, reason: event.reason ?? note });
 
