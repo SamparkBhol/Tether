@@ -823,3 +823,13 @@ textarea {
 .launch-config label {
   font-weight: 600;
 }
+
+.team-switch select {
+  width: auto;
+  padding: var(--ds-space-050, 4px) var(--ds-space-100, 8px);
+  border: 1px solid var(--t-border);
+  border-radius: 3px;
+  background: var(--ds-background-input, #fff);
+  color: var(--t-muted);
+  font: inherit;
+}

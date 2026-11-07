@@ -33,3 +33,5 @@ export const round = (n: number, digits = 2) => Math.round(n * 10 ** digits) / 1
 
 export const log = (event: string, data: Record<string, unknown> = {}) =>
   console.log(JSON.stringify({ event, ...data }));
+
+export const kvKey = (...parts: string[]) => parts.join(':').replace(/[^a-zA-Z0-9:._#-]/g, '_').slice(0, 480);

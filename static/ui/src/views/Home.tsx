@@ -47,15 +47,27 @@ export const Home = ({ boot, refreshBoot }: { boot: Bootstrap; refreshBoot: () =
       {tab === 'desk' &&
         (team ? (
           <>
-            {mine.length > 1 && (
-              <div className="team-switch">
-                {mine.map((t) => (
-                  <button key={t.id} aria-pressed={t.id === team} onClick={() => setTeam(t.id)}>
-                    {t.name}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="team-switch">
+              {mine.map((t) => (
+                <button key={t.id} aria-pressed={t.id === team} onClick={() => setTeam(t.id)}>
+                  {t.name}
+                </button>
+              ))}
+              <select
+                aria-label="Open another team's desk"
+                value={mine.some((t) => t.id === team) ? '' : (team ?? '')}
+                onChange={(e) => e.target.value && setTeam(e.target.value)}
+              >
+                <option value="">Another team…</option>
+                {boot.teams
+                  .filter((t) => !boot.myTeams.includes(t.id))
+                  .map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
             <Desk boot={boot} teamId={team} onPinned={refreshBoot} />
           </>
         ) : (

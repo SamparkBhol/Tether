@@ -179,7 +179,13 @@ export const Ask = ({ boot, issueKey, inModal }: { boot: Bootstrap; issueKey: st
         {draft && (
           <div className={drafting ? 'stale' : ''}>
             <p className="verdict">{verdictLine(draft.negotiation, draft.owner.name)}</p>
-            <Curve points={draft.negotiation.curve} neededBy={neededBy} due={draft.negotiation.recommended.dueDate} />
+            <Curve
+              points={draft.negotiation.curve}
+              neededBy={neededBy}
+              due={draft.negotiation.recommended.dueDate}
+              neededConfidence={draft.negotiation.options[0]?.confidence}
+              dueConfidence={draft.negotiation.recommended.confidence}
+            />
             <p className="muted small">{paceLine(draft)}</p>
             {draft.goals.length > 0 && (
               <p className="small">

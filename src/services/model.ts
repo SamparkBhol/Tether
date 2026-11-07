@@ -4,7 +4,7 @@ import { fromDay, toDay } from '../engine/forecast/calendar';
 import { sampleThroughput, summarise, type ThroughputSample, type ThroughputSummary } from '../engine/forecast/throughput';
 import { completions } from '../jira/issues';
 import { asApp } from '../jira/client';
-import { todayIso } from '../lib/util';
+import { kvKey, todayIso } from '../lib/util';
 import { getPolicy } from '../store/records';
 
 export type Basis = 'live' | 'past' | 'declared';
@@ -18,7 +18,7 @@ export interface TeamModelView {
   summary: ThroughputSummary;
 }
 
-const cacheKey = (teamId: string) => `throughput:${teamId}`;
+const cacheKey = (teamId: string) => kvKey('throughput', teamId);
 const STALE_AFTER_DAYS = 21;
 
 const completionDates = async (team: Team): Promise<string[]> => {

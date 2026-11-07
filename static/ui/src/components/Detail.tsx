@@ -51,7 +51,7 @@ export const Detail = ({ id, teamName, onChanged }: { id: string; teamName: (id:
   const c = data.commitment;
   return (
     <div className="detail">
-      <Curve points={data.forecast.curve} neededBy={c.neededBy} due={c.terms.dueDate} />
+      <Curve points={data.forecast.curve} neededBy={c.neededBy} due={c.terms.dueDate} dueConfidence={data.forecast.probability} />
       <p className="detail-basis">
         {basisLine(data.forecast.basis, data.forecast.windowEnd, data.forecast.itemsAhead)} Half the time it lands by {dayLabel(data.forecast.dates.p50)}, and 85% of
         the time by {dayLabel(data.forecast.dates.p85)}.

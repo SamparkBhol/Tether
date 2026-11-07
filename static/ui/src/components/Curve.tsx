@@ -9,6 +9,8 @@ interface Props {
   target?: number;
   height?: number;
   label?: string;
+  neededConfidence?: number;
+  dueConfidence?: number;
 }
 
 const W = 640;
@@ -21,7 +23,7 @@ const probabilityAt = (points: CurvePoint[], iso: string) => {
   return p;
 };
 
-export const Curve = ({ points, neededBy, due, target = 0.85, height = 168, label }: Props) => {
+export const Curve = ({ points, neededBy, due, target = 0.85, height = 168, label, neededConfidence, dueConfidence }: Props) => {
   const H = height;
   const geo = useMemo(() => {
     if (!points.length) return null;
@@ -45,8 +47,8 @@ export const Curve = ({ points, neededBy, due, target = 0.85, height = 168, labe
   }, [points, neededBy, due, H]);
 
   if (!geo) return <div className="curve-empty">No forecast yet.</div>;
-  const neededP = neededBy ? probabilityAt(points, neededBy) : null;
-  const dueP = due ? probabilityAt(points, due) : null;
+  const neededP = neededBy ? (neededConfidence ?? probabilityAt(points, neededBy)) : null;
+  const dueP = due ? (due === neededBy && neededConfidence !== undefined ? neededConfidence : (dueConfidence ?? probabilityAt(points, due))) : null;
   const summary =
     label ??
     [

@@ -33,13 +33,15 @@ const contextProject = (r: Req): string => r.payload.projectKey ?? r.context.ext
 
 def('bootstrap', async (r) => {
   const s = scope(r);
-  const teams = await syncTeams(s, !!r.payload.refresh);
   const mine = await myTeamIds(s);
+  const teams = await syncTeams(s, !!r.payload.refresh);
   const project = contextProject(r);
   const here = project ? teams.find((t) => t.spaceKeys.includes(project)) : undefined;
   return {
     accountId: s.accountId,
-    teams: teams.map((t) => ({ id: t.id, name: t.name, source: t.source, spaceKeys: t.spaceKeys, avatarUrl: t.avatarUrl })),
+    teams: teams
+      .filter((t) => t.spaceKeys.length > 0)
+      .map((t) => ({ id: t.id, name: t.name, source: t.source, spaceKeys: t.spaceKeys, avatarUrl: t.avatarUrl })),
     myTeams: mine,
     here: here?.id ?? null,
     issueKey: contextIssue(r) || null,

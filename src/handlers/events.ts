@@ -1,6 +1,6 @@
 import type { AsyncEvent } from '@forge/events';
 import { kvs } from '@forge/kvs';
-import { log } from '../lib/util';
+import { kvKey, log } from '../lib/util';
 import { replanAll } from '../services/replanning';
 import { enqueue, type Job } from '../services/queue';
 import { systemScope } from '../services/scope';
@@ -22,7 +22,7 @@ export const onIssue = async (event: IssueEvent, context: Record<string, any>) =
   if (!key) return;
   const items = event.changelog?.items ?? [];
   if (event.eventType === 'avi:jira:updated:issue' && items.length && !items.some((i) => RELEVANT.has(i.field ?? '') || RELEVANT.has(i.fieldId ?? ''))) return;
-  const dedupe = event.changelog?.id ? `seen:${event.changelog.id}` : null;
+  const dedupe = event.changelog?.id ? kvKey('seen', String(event.changelog.id)) : null;
   if (dedupe && (await kvs.get(dedupe))) return;
   const touching = await touchingIssues([key]);
   if (!touching.length && event.eventType !== 'avi:jira:deleted:issue') return;

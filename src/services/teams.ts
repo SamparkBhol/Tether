@@ -2,6 +2,7 @@ import { kvs } from '@forge/kvs';
 import type { Team } from '../domain/types';
 import { spacesForTeam, teamsForSpace, teamsOfUser } from '../graph/context';
 import { listProjects, type ProjectLite } from '../jira/projects';
+import { kvKey } from '../lib/util';
 import { allTeams, getTeam, upsertTeam } from '../store/records';
 import { graphScope, type Scope } from './scope';
 
@@ -103,7 +104,7 @@ export const findTeams = (teams: Team[], query: string): Team[] => {
     .map((x) => x.t);
 };
 
-const MY_TEAMS = (accountId: string) => `my-teams:${accountId}`;
+const MY_TEAMS = (accountId: string) => kvKey('my-teams', accountId);
 
 export const myTeamIds = async (s: Scope): Promise<string[]> => {
   if (!s.accountId) return [];
