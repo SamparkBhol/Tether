@@ -15,7 +15,8 @@ export const addDays = (iso: string, n: number) => new Date(toDate(iso).getTime(
 
 export const today = () => new Date().toISOString().slice(0, 10);
 
-export const pct = (p: number | null | undefined) => (p === null || p === undefined ? 'n/a' : `${Math.round(p * 100)}%`);
+export const pct = (p: number | null | undefined) =>
+  p === null || p === undefined ? 'n/a' : p >= 0.995 ? '99%+' : p > 0 && p < 0.005 ? 'under 1%' : `${Math.round(p * 100)}%`;
 
 export type Tone = 'good' | 'tight' | 'low' | 'none';
 

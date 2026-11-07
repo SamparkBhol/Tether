@@ -273,7 +273,8 @@ textarea {
 .curve svg {
   display: block;
   width: 100%;
-  height: 168px;
+  height: auto;
+  max-height: 220px;
 }
 
 .curve figcaption {

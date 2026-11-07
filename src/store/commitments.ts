@@ -1,7 +1,7 @@
 import { staleVersion } from '../domain/errors';
 import type { Commitment, CommitmentState, Terms } from '../domain/types';
 import { parseJson } from '../lib/util';
-import { exec, one, placeholders, rows } from './db';
+import { exec, lim, one, placeholders, rows } from './db';
 
 interface Row {
   id: string;
@@ -105,10 +105,10 @@ export const openCommitments = async () =>
   (await rows<Row>(`SELECT * FROM commitments WHERE state IN (${placeholders(OPEN.length)}) LIMIT 2000`, ...OPEN)).map(fromRow);
 
 export const forOwner = async (teamId: string, limit = 200) =>
-  (await rows<Row>('SELECT * FROM commitments WHERE owner_team_id = ? ORDER BY updated_at DESC LIMIT ?', teamId, limit)).map(fromRow);
+  (await rows<Row>(`SELECT * FROM commitments WHERE owner_team_id = ? ORDER BY updated_at DESC LIMIT ${lim(limit)}`, teamId)).map(fromRow);
 
 export const forRequester = async (teamId: string, limit = 200) =>
-  (await rows<Row>('SELECT * FROM commitments WHERE requester_team_id = ? ORDER BY updated_at DESC LIMIT ?', teamId, limit)).map(fromRow);
+  (await rows<Row>(`SELECT * FROM commitments WHERE requester_team_id = ? ORDER BY updated_at DESC LIMIT ${lim(limit)}`, teamId)).map(fromRow);
 
 export const touchingIssues = async (keys: string[]) => {
   if (!keys.length) return [];
@@ -119,4 +119,4 @@ export const touchingIssues = async (keys: string[]) => {
 };
 
 export const recent = async (limit = 300) =>
-  (await rows<Row>('SELECT * FROM commitments ORDER BY updated_at DESC LIMIT ?', limit)).map(fromRow);
+  (await rows<Row>(`SELECT * FROM commitments ORDER BY updated_at DESC LIMIT ${lim(limit)}`)).map(fromRow);

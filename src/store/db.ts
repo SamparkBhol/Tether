@@ -46,3 +46,5 @@ export const exec = async (query: string, ...params: unknown[]): Promise<number>
 };
 
 export const placeholders = (n: number) => new Array(n).fill('?').join(',');
+
+export const lim = (n: number) => Math.max(1, Math.min(5000, Math.floor(Number(n) || 1)));

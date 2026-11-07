@@ -31,7 +31,6 @@ export const Home = ({ boot, refreshBoot }: { boot: Bootstrap; refreshBoot: () =
   return (
     <div className="home">
       <header className="home-head">
-        <h1>Tether</h1>
         <nav className="tabs" role="tablist">
           <button role="tab" aria-selected={tab === 'desk'} onClick={() => setTab('desk')}>
             Your team

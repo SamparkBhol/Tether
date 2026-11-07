@@ -183,7 +183,7 @@ export const Ask = ({ boot, issueKey, inModal }: { boot: Bootstrap; issueKey: st
             <p className="muted small">{paceLine(draft)}</p>
             {draft.goals.length > 0 && (
               <p className="small">
-                Serves {draft.goals.map((g) => g.name).join(', ')}. Asks tied to company goals go ahead of the rest.
+                Serves {draft.goals.map((g) => g.name.replace(/[.\s]+$/, '')).join(', ')}. Asks tied to company goals go ahead of the rest.
               </p>
             )}
             {draft.cycle && (

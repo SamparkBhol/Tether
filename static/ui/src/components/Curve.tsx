@@ -26,8 +26,9 @@ export const Curve = ({ points, neededBy, due, target = 0.85, height = 168, labe
   const geo = useMemo(() => {
     if (!points.length) return null;
     const dates = [...points.map((p) => p.date), ...(neededBy ? [neededBy] : []), ...(due ? [due] : [])].map((d) => toDate(d).getTime());
-    const min = Math.min(...dates) - 86_400_000;
-    const max = Math.max(...dates) + 86_400_000;
+    const span = Math.max(...dates) - Math.min(...dates);
+    const min = Math.min(...dates) - Math.max(86_400_000, span * 0.03);
+    const max = Math.max(...dates) + Math.max(2 * 86_400_000, span * 0.12);
     const x = (iso: string) => PAD.l + ((toDate(iso).getTime() - min) / (max - min)) * (W - PAD.l - PAD.r);
     const y = (p: number) => PAD.t + (1 - p) * (H - PAD.t - PAD.b);
     const steps: string[] = [`M ${PAD.l} ${y(0)}`];
@@ -57,7 +58,7 @@ export const Curve = ({ points, neededBy, due, target = 0.85, height = 168, labe
 
   return (
     <figure className="curve">
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Chance of delivery by date. ${summary}`} preserveAspectRatio="none">
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Chance of delivery by date. ${summary}`} preserveAspectRatio="xMidYMid meet">
         <line className="curve-target" x1={PAD.l} x2={W - PAD.r} y1={geo.y(target)} y2={geo.y(target)} />
         <text className="curve-axis" x={W - PAD.r} y={geo.y(target) - 5} textAnchor="end">
           {pct(target)}
@@ -67,7 +68,7 @@ export const Curve = ({ points, neededBy, due, target = 0.85, height = 168, labe
         {neededBy && (
           <g className="curve-needed">
             <line x1={geo.x(neededBy)} x2={geo.x(neededBy)} y1={PAD.t - 14} y2={H - PAD.b} />
-            <text x={geo.x(neededBy) + 5} y={PAD.t - 6}>
+            <text x={geo.x(neededBy) + (geo.x(neededBy) > W * 0.75 ? -6 : 6)} y={PAD.t - 6} textAnchor={geo.x(neededBy) > W * 0.75 ? 'end' : 'start'}>
               Needed {shortDay(neededBy)}
             </text>
           </g>

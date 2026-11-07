@@ -108,8 +108,13 @@ const MY_TEAMS = (accountId: string) => `my-teams:${accountId}`;
 export const myTeamIds = async (s: Scope): Promise<string[]> => {
   if (!s.accountId) return [];
   const pinned = (await kvs.get<string[]>(MY_TEAMS(s.accountId))) ?? [];
-  const fromGraph = (await teamsOfUser(graphScope(s), s.accountId)).map((t) => t.id);
-  return [...new Set([...fromGraph, ...pinned])];
+  const graphTeams = await teamsOfUser(graphScope(s), s.accountId);
+  const known = new Set((await allTeams()).map((t) => t.id));
+  for (const g of graphTeams.filter((t) => !known.has(t.id))) {
+    const spaces = await spacesForTeam(graphScope(s), g.id);
+    await upsertTeam({ id: g.id, name: g.name, source: 'graph', spaceKeys: spaces.map((x) => x.key), avatarUrl: g.avatarUrl, profileUrl: g.profileUrl });
+  }
+  return [...new Set([...graphTeams.map((t) => t.id), ...pinned])];
 };
 
 export const pinTeam = async (s: Scope, teamId: string, on: boolean) => {
