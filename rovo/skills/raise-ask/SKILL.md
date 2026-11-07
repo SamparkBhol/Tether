@@ -25,6 +25,12 @@ allowed-tools: find-team draft-ask raise-ask my-commitments
 
 ## Tool guidance
 
+### `find-team`
+Finds teams by name or space key. Call it first when the user names a team loosely, and show every match when there is more than one.
+
+### `my-commitments`
+Lists what the user's teams already owe and are waiting on. Check it before raising a new ask so you can point to an existing one instead.
+
 ### `draft-ask`
 Read-only. It never changes Jira. Use it as often as needed while the user explores dates.
 

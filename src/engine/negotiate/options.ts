@@ -30,6 +30,8 @@ export interface Negotiation {
   options: Option[];
   recommended: Option;
   verdict: 'easy' | 'tight' | 'needs_tradeoff' | 'later' | 'not_this_quarter';
+  curve: { date: string; probability: number }[];
+  basis: 'history' | 'declared';
 }
 
 export type Forecaster = (itemsAhead: number, size: number, dueDay: number, salt: string) => SimulationResult;
@@ -177,5 +179,5 @@ export const negotiate = (input: NegotiationInput): Negotiation => {
             ? 'not_this_quarter'
             : 'later';
 
-  return { neededBy: ask.dueDate, options, recommended, verdict };
+  return { neededBy: ask.dueDate, options, recommended, verdict, curve: asAsked.curve, basis: asAsked.basis };
 };

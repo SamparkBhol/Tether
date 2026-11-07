@@ -30,7 +30,9 @@ modules:
   rovo:agent:
     - key: tether-agent
       name: Tether
-      description: Get a date you can plan around from another team. Tether drafts the ask, forecasts it against the other team's real pace and shows the trade-offs before anything is sent.
+      description: Get a date you can plan around from another team. Tether drafts the
+        ask, forecasts it against the other team's real pace and shows the
+        trade-offs before anything is sent.
       icon: resource:ui;tether.svg
       prompt: resource:prompts;tether.txt
       conversationStarters:
@@ -38,13 +40,15 @@ modules:
         - What are we waiting on from other teams?
         - What breaks if the Platform work slips a week?
       skills:
-        - raise-ask
-        - replan-slip
+        - ask-skill
+        - replan-skill
       actions:
         - commitment-status
     - key: tether-desk-agent
       name: Tether Desk
-      description: Answer asks from other teams without overpromising. Recommends accept, counter or decline with the cost to your existing promises spelled out.
+      description: Answer asks from other teams without overpromising. Recommends
+        accept, counter or decline with the cost to your existing promises
+        spelled out.
       icon: resource:ui;tether.svg
       prompt: resource:prompts;desk.txt
       conversationStarters:
@@ -52,11 +56,11 @@ modules:
         - Which of our promises are slipping?
         - Draft a counter for the newest ask
       skills:
-        - negotiate-commitment
-        - replan-slip
+        - negotiate-skill
+        - replan-skill
 
   rovo:skill:
-    - key: raise-ask
+    - key: ask-skill
       source:
         dir: rovo/skills/raise-ask
       dependencies:
@@ -65,7 +69,7 @@ modules:
           - draft-ask
           - raise-ask
           - my-commitments
-    - key: negotiate-commitment
+    - key: negotiate-skill
       source:
         dir: rovo/skills/negotiate-commitment
       dependencies:
@@ -75,7 +79,7 @@ modules:
           - propose-terms
           - accept-commitment
           - decline-ask
-    - key: replan-slip
+    - key: replan-skill
       source:
         dir: rovo/skills/replan-slip
       dependencies:
@@ -106,7 +110,8 @@ modules:
       name: Find a team
       function: a-find-team
       actionVerb: GET
-      description: Finds teams by name or by the Jira space they own. With no query, returns the teams the current user belongs to.
+      description: Finds teams by name or by the Jira space they own. With no query,
+        returns the teams the current user belongs to.
       inputs:
         query:
           title: Team name or space
@@ -117,13 +122,17 @@ modules:
       name: Draft an ask
       function: a-draft
       actionVerb: GET
-      description: Read-only preview of an ask to another team. Returns the owning team, the goals the work serves, the team's pace and a forecast with options such as a later date, a smaller first slice or moving ahead of lower-priority work. Changes nothing.
+      description: Read-only preview of an ask to another team. Returns the owning
+        team, the goals the work serves, the team's pace and a forecast with
+        options such as a later date, a smaller first slice or moving ahead of
+        lower-priority work. Changes nothing.
       inputs:
         issueKey:
           title: Work item key
           type: string
           required: false
-          description: The work item that needs the other team, for example MC-12. Omit when called from a work item.
+          description: The work item that needs the other team, for example MC-12. Omit
+            when called from a work item.
         team:
           title: Owning team
           type: string
@@ -138,7 +147,8 @@ modules:
           title: Title
           type: string
           required: false
-          description: Short title for the ask, written so the other team understands it on its own.
+          description: Short title for the ask, written so the other team understands it
+            on its own.
         detail:
           title: Detail
           type: string
@@ -153,18 +163,22 @@ modules:
           title: Client
           type: string
           required: false
-          description: Name of the AI client making the call when used over MCP, for example Cursor.
+          description: Name of the AI client making the call when used over MCP, for
+            example Cursor.
     - key: raise-ask
       name: Raise an ask
       function: a-raise
       actionVerb: CREATE
-      description: Sends an ask to another team and records it as a proposed commitment with its forecast. Only call after the user confirms the team, title, date and items.
+      description: Sends an ask to another team and records it as a proposed
+        commitment with its forecast. Only call after the user confirms the
+        team, title, date and items.
       inputs:
         issueKey:
           title: Work item key
           type: string
           required: false
-          description: The work item that needs the other team. Omit when called from a work item.
+          description: The work item that needs the other team. Omit when called from a
+            work item.
         team:
           title: Owning team
           type: string
@@ -199,7 +213,9 @@ modules:
       name: Team desk
       function: a-desk
       actionVerb: GET
-      description: Shows a team's incoming asks waiting for an answer with options for each, its current promises with confidence, its pace and how accurate its past forecasts were.
+      description: Shows a team's incoming asks waiting for an answer with options for
+        each, its current promises with confidence, its pace and how accurate
+        its past forecasts were.
       inputs:
         team:
           title: Team
@@ -210,7 +226,8 @@ modules:
       name: Commitment status
       function: a-status
       actionVerb: GET
-      description: Status of one commitment by id, or of everything a work item waits on and promises to others by work item key, with forecasts and history.
+      description: Status of one commitment by id, or of everything a work item waits
+        on and promises to others by work item key, with forecasts and history.
       inputs:
         commitmentId:
           title: Commitment id
@@ -226,7 +243,9 @@ modules:
       name: Propose terms
       function: a-propose
       actionVerb: UPDATE
-      description: Proposes a new date or a smaller first slice for a commitment. Counters a new ask, re-proposes after a counter, or opens a renegotiation. Only call after the user confirms.
+      description: Proposes a new date or a smaller first slice for a commitment.
+        Counters a new ask, re-proposes after a counter, or opens a
+        renegotiation. Only call after the user confirms.
       inputs:
         commitmentId:
           title: Commitment id
@@ -242,7 +261,8 @@ modules:
           title: Items
           type: integer
           required: false
-          description: Number of items in the proposal. Lower than the original means a first slice.
+          description: Number of items in the proposal. Lower than the original means a
+            first slice.
         reason:
           title: Reason
           type: string
@@ -252,7 +272,9 @@ modules:
       name: Accept a commitment
       function: a-accept
       actionVerb: UPDATE
-      description: Accepts an ask, a counter-offer or renegotiated terms. On first acceptance it creates the linked work item in the owning team's space. Only call after the user confirms.
+      description: Accepts an ask, a counter-offer or renegotiated terms. On first
+        acceptance it creates the linked work item in the owning team's space.
+        Only call after the user confirms.
       inputs:
         commitmentId:
           title: Commitment id
@@ -263,7 +285,8 @@ modules:
       name: Decline an ask
       function: a-decline
       actionVerb: UPDATE
-      description: Declines an ask with a reason the asking team can plan around. Only call after the user confirms.
+      description: Declines an ask with a reason the asking team can plan around. Only
+        call after the user confirms.
       inputs:
         commitmentId:
           title: Commitment id
@@ -279,7 +302,9 @@ modules:
       name: Slip impact
       function: a-what-if
       actionVerb: GET
-      description: Read-only what-if. Shows every downstream commitment that would move if this one landed on a new date, with confidence before and after. Changes nothing.
+      description: Read-only what-if. Shows every downstream commitment that would
+        move if this one landed on a new date, with confidence before and after.
+        Changes nothing.
       inputs:
         commitmentId:
           title: Commitment id
@@ -295,7 +320,8 @@ modules:
       name: My commitments
       function: a-mine
       actionVerb: GET
-      description: Everything the user's teams owe other teams and are waiting on from them, or everything touching one work item.
+      description: Everything the user's teams owe other teams and are waiting on from
+        them, or everything touching one work item.
       inputs:
         issueKey:
           title: Work item key
@@ -325,7 +351,7 @@ modules:
       function: consume
 
   scheduledTrigger:
-    - key: nightly
+    - key: nightly-replan
       function: nightly
       interval: day
 
@@ -403,5 +429,6 @@ permissions:
 app:
   runtime:
     name: nodejs22.x
-    memoryMB: 512
+    memoryMB: 256
     architecture: arm64
+  id: ari:cloud:ecosystem::app/8943838a-186c-4f4f-99d1-2ee293472e64
