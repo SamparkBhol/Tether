@@ -1,0 +1,26 @@
+{
+  "name": "tether",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "ui:build": "npm --prefix static/ui run build",
+    "deploy": "npm run ui:build && forge deploy",
+    "lint": "forge lint"
+  },
+  "dependencies": {
+    "@forge/api": "^8.4.0",
+    "@forge/events": "^3.0.9",
+    "@forge/kvs": "^2.1.1",
+    "@forge/realtime": "^1.0.3",
+    "@forge/resolver": "^2.0.2",
+    "@forge/sql": "^4.0.9"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "~5.9.3"
+  }
+}
