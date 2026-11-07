@@ -36,7 +36,8 @@ export const Row = ({ card, perspective, teamName, onChanged, open = false, link
         </span>
         <span className="row-when">
           <span className="row-date" title={proposing ? `Was ${dayLabel(card.terms.dueDate)}` : undefined}>
-            {proposing && <span className="row-was">{dayLabel(card.terms.dueDate)}</span>}
+            {proposing && card.pendingTerms!.dueDate !== card.terms.dueDate && <span className="row-was">{dayLabel(card.terms.dueDate)}</span>}
+            {proposing && card.pendingTerms!.size !== card.terms.size && <span className="row-scope">{`${card.pendingTerms!.size} of ${card.terms.size} items by `}</span>}
             {dayLabel(due)}
           </span>
           <span className="row-pace">

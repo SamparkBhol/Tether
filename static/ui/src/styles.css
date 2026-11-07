@@ -1531,3 +1531,8 @@ textarea {
   margin: 0 0 var(--ds-space-150, 12px);
   color: var(--ds-text-danger, #ae2e24);
 }
+
+.row-scope {
+  color: var(--ds-text-accent-magenta, #943d73);
+  font-weight: 600;
+}
