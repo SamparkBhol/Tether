@@ -27,6 +27,22 @@ modules:
       resolver:
         function: resolver
 
+  macro:
+    - key: tether-launch
+      title: Tether launch readiness
+      description: When everything a launch needs from other teams will land, updated live.
+      icon: resource:ui;tether.svg
+      resource: ui
+      resolver:
+        function: resolver
+      config:
+        resource: ui
+        title: Tether launch readiness
+        viewportSize: small
+        parameters:
+          - identifier: issueKey
+            type: string
+
   rovo:agent:
     - key: tether-agent
       name: Tether
@@ -427,6 +443,11 @@ permissions:
       - unsafe-inline
 
 app:
+  compatibility:
+    jira:
+      required: true
+    confluence:
+      required: false
   runtime:
     name: nodejs22.x
     memoryMB: 256

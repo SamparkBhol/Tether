@@ -59,7 +59,7 @@ export const panelView = async (s: Scope, issueKey: string) => {
   const promisedTo = visible.filter((c) => c.ownerIssueKey === issueKey).map((c) => card(c, teams, mine));
   const readiness = await readinessFor(waitingOn.filter((c) => isOpen(c.state) || isPending(c.state)).map((c) => c.id));
   return {
-    issue: { key: issue.key, summary: issue.summary, projectKey: issue.projectKey, url: issue.url },
+    issue: { key: issue.key, summary: issue.summary, projectKey: issue.projectKey, url: issue.url, dueDate: issue.dueDate ?? null },
     waitingOn,
     promisedTo,
     readiness,

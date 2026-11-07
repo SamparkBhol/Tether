@@ -9,11 +9,18 @@ import type { Bootstrap } from './types';
 import { Ask } from './views/Ask';
 import { Desk } from './views/Desk';
 import { Home } from './views/Home';
+import { Launch, LaunchConfig } from './views/Launch';
 import { Panel } from './views/Panel';
 
 interface Ctx {
   moduleKey?: string;
-  extension?: { issue?: { key?: string }; project?: { key?: string }; modal?: { mode?: string; issueKey?: string } };
+  extension?: {
+    issue?: { key?: string };
+    project?: { key?: string };
+    modal?: { mode?: string; issueKey?: string };
+    macro?: { isConfiguring?: boolean };
+    config?: { issueKey?: string };
+  };
 }
 
 const App = () => {
@@ -39,6 +46,10 @@ const App = () => {
   if (error) return <Problem message={error} onRetry={load} />;
   if (!ctx || !boot) return <Loading />;
 
+  if (ctx.moduleKey === 'tether-launch') {
+    const key = ctx.extension?.config?.issueKey ?? '';
+    return ctx.extension?.macro?.isConfiguring ? <LaunchConfig initial={key} /> : <Launch boot={boot} issueKey={key} />;
+  }
   const modal = ctx.extension?.modal;
   const issueKey = modal?.issueKey ?? ctx.extension?.issue?.key ?? boot.issueKey ?? '';
   if (modal?.mode === 'ask' || ctx.moduleKey === 'tether-ask') return <Ask boot={boot} issueKey={issueKey} inModal />;

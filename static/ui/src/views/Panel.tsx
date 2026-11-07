@@ -2,7 +2,7 @@ import Button from '@atlaskit/button/new';
 import { Modal, rovo } from '@forge/bridge';
 import { useEffect, useState } from 'react';
 import { useCall, useChanges } from '../api';
-import { Empty, Loading, Problem, Section } from '../components/bits';
+import { Loading, Problem, Section } from '../components/bits';
 import { Row } from '../components/Row';
 import { dayLabel } from '../format';
 import type { Bootstrap, Card, CurvePoint } from '../types';
@@ -59,9 +59,11 @@ export const Panel = ({ boot }: { boot: Bootstrap }) => {
                 Ask in Rovo
               </Button>
             )}
-            <Button appearance="primary" spacing="compact" onClick={ask}>
-              Ask another team
-            </Button>
+            {data.waitingOn.length > 0 && (
+              <Button appearance="primary" spacing="compact" onClick={ask}>
+                Ask another team
+              </Button>
+            )}
           </span>
         }
       >
@@ -72,9 +74,20 @@ export const Panel = ({ boot }: { boot: Bootstrap }) => {
             ))}
           </ul>
         ) : (
-          <Empty title="Nothing from other teams yet">
-            When this work needs a review, an API or a sign-off from another team, ask here and you'll get a date with odds attached.
-          </Empty>
+          <div className="cta">
+            <svg className="cta-mark" viewBox="0 0 64 24" aria-hidden="true">
+              <path d="M8 12 C 24 2, 40 22, 56 12" />
+              <circle cx="8" cy="12" r="6" className="cta-a" />
+              <circle cx="56" cy="12" r="6" className="cta-b" />
+            </svg>
+            <div className="cta-text">
+              <p className="cta-title">Need something from another team?</p>
+              <p>A review, an API, a sign-off. Ask here and you'll get a real date with odds, not a "we'll try".</p>
+            </div>
+            <Button appearance="primary" onClick={ask}>
+              Ask another team
+            </Button>
+          </div>
         )}
       </Section>
       {data.promisedTo.length > 0 && (
