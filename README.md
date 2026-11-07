@@ -38,6 +38,12 @@ Tether doesn't ask anyone for estimates. It replays the owning team's real day t
 
 When a team has no recent history in Jira, Tether says so and uses the capacity the team set instead. It never pretends.
 
+## Built on Forge
+
+Everything runs on Forge, with nothing hosted outside Atlassian. Forge SQL holds the commitment ledger, async events run the replanner, Realtime keeps every open screen current and a nightly trigger recalibrates forecasts.
+
+Tether shows up where people already work. It sits in the Jira work item panel and sidebar, in a team desk and a cross-team board, in a Confluence macro for launch pages, in Rovo as two agents and three reusable skills, and in any MCP client. Notifications go out as ordinary Jira emails and comments.
+
 ## Rovo, MCP and the Teamwork Graph
 
 - **Tether** is a Rovo agent for the asking side. **Tether Desk** helps the owning team answer. Both work through the same actions, and three skills (`raise-ask`, `negotiate-commitment`, `replan-slip`) that any Rovo Studio agent can reuse.
