@@ -55,7 +55,7 @@ const useBuild = (onDone: () => void) => {
         return;
       }
       setState('idle');
-      showFlag({ id: 'sample-ready', title: 'Sample launch ready', description: 'Five teams, six promises. Open any row to see how the forecast was made.', type: 'success', isAutoDismiss: true });
+      showFlag({ id: 'sample-ready', title: 'Sample launch ready', description: 'Open any row to see how each forecast was made.', type: 'success', isAutoDismiss: true });
       onDone();
     },
     (c) => c.kind === 'sample' && c.state !== 'removed',
