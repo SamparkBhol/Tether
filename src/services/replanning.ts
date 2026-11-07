@@ -75,7 +75,7 @@ export const replanAll = async (s: Scope, reason: string) => {
     const model = views.get(c.ownerTeamId);
     const now = inputsOf(r.result);
     const before = await latestInputs<Inputs>(c.id);
-    await setConfidence(c.id, round(r.confidence, 4));
+    await setConfidence(c.id, round(r.confidence, 4), r.result.dates.p85);
     await saveSnapshot({
       commitmentId: c.id,
       takenOn: todayIso(),

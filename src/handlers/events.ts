@@ -6,6 +6,9 @@ import { enqueue, type Job } from '../services/queue';
 import { systemScope } from '../services/scope';
 import { syncTeams } from '../services/teams';
 import { migrate } from '../store/db';
+import { createSample, removeSample } from '../services/sample';
+import { publishGlobal } from '@forge/realtime';
+import { CHANNEL } from '../services/notify';
 import { touchingIssues } from '../store/commitments';
 
 interface IssueEvent {
@@ -47,6 +50,19 @@ export const consume = async (event: AsyncEvent, context: Record<string, any>) =
     case 'sync':
       await syncTeams(s, true);
       return;
+    case 'sample': {
+      const as = systemScope(context, job.accountId);
+      const user = { ...as, system: false };
+      try {
+        if (job.remove) await removeSample(user);
+        else await createSample(user);
+        await publishGlobal(CHANNEL, { kind: 'sample', id: '', state: job.remove ? 'removed' : 'ready', teams: [], issues: [] });
+      } catch (e) {
+        log('sample.failed', { message: (e as Error).message });
+        await publishGlobal(CHANNEL, { kind: 'sample', id: '', state: 'failed', teams: [], issues: [], message: (e as Error).message });
+      }
+      return;
+    }
     case 'issue':
     case 'replan': {
       const last = (await kvs.get<number>(DEBOUNCE)) ?? 0;

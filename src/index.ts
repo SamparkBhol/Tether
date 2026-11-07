@@ -1,5 +1,6 @@
 export { handler as resolver } from './handlers/resolver';
 export { onIssue, onLifecycle, consume, nightly } from './handlers/events';
+export { contextStatus } from './handlers/context';
 export {
   findTeam,
   draft,

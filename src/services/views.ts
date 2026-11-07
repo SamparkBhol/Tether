@@ -43,6 +43,8 @@ const card = (c: Commitment, teams: Map<string, Team>, mine: string[]) => {
     side,
     actions: side ? unique([...allowedActions(c, side), ...(both ? allowedActions(c, side === 'owner' ? 'requester' : 'owner') : [])]) : [],
     lateBy: isOpen(c.state) ? Math.max(0, toDay(todayIso()) - toDay(c.terms.dueDate)) : 0,
+    forecastP85: c.forecastP85 ?? null,
+    delta: c.forecastP85 && (isOpen(c.state) || isPending(c.state)) ? toDay(c.forecastP85) - toDay(c.terms.dueDate) : null,
     updatedAt: c.updatedAt,
   };
 };

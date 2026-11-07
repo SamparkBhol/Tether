@@ -69,6 +69,7 @@ export interface Commitment {
   confidence?: number;
   committedConfidence?: number;
   deliveredAt?: IsoInstant;
+  forecastP85?: IsoDate;
   version: number;
   createdAt: IsoInstant;
   updatedAt: IsoInstant;

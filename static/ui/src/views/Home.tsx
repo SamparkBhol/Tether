@@ -4,6 +4,7 @@ import { call, useCall, useChanges } from '../api';
 import { Empty, Loading, Problem, Section } from '../components/bits';
 import { Row } from '../components/Row';
 import { TeamMap, type Edge } from '../components/TeamMap';
+import { RemoveSample, SampleCard } from '../components/Sample';
 import type { Bootstrap, Card, TeamLite } from '../types';
 import { Desk } from './Desk';
 
@@ -39,9 +40,12 @@ export const Home = ({ boot, refreshBoot }: { boot: Bootstrap; refreshBoot: () =
             Across teams
           </button>
         </nav>
-        <Button appearance="subtle" onClick={() => (void call('bootstrap', { refresh: true }).then(refreshBoot))}>
-          Refresh teams
-        </Button>
+        <span className="section-actions">
+          {boot.sample && <RemoveSample onDone={() => (refreshBoot(), void ledger.reload())} />}
+          <Button appearance="subtle" onClick={() => (void call('bootstrap', { refresh: true }).then(refreshBoot))}>
+            Refresh teams
+          </Button>
+        </span>
       </header>
 
       {tab === 'desk' &&
@@ -115,8 +119,10 @@ export const Home = ({ boot, refreshBoot }: { boot: Bootstrap; refreshBoot: () =
                     <Row key={c.id} card={c} perspective={c.side ?? 'requester'} teamName={teamName} onChanged={ledger.reload} />
                   ))}
                 </ul>
-              ) : (
+              ) : boot.sample ? (
                 <Empty title="No commitments yet">Open any work item and use Ask another team to start one.</Empty>
+              ) : (
+                <SampleCard onDone={() => (refreshBoot(), void ledger.reload())} />
               )}
             </Section>
           </>

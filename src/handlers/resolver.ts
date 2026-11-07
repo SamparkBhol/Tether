@@ -9,6 +9,7 @@ import { enqueue } from '../services/queue';
 import { userScope } from '../services/scope';
 import { myTeamIds, pinTeam, syncTeams } from '../services/teams';
 import { deskView, detailView, ledgerView, panelView } from '../services/views';
+import { sampleStatus } from '../services/sample';
 import { savePolicy } from '../store/records';
 import { friendly } from './shared';
 
@@ -46,7 +47,15 @@ def('bootstrap', async (r) => {
     here: here?.id ?? null,
     issueKey: contextIssue(r) || null,
     moduleKey: r.context.moduleKey ?? null,
+    sample: !!(await sampleStatus()),
   };
+});
+
+def('sample', async (r) => {
+  const s = scope(r);
+  if (!s.accountId) throw invalid('Sign in to build the sample launch.');
+  await enqueue({ kind: 'sample', accountId: s.accountId, remove: !!r.payload.remove });
+  return { queued: true };
 });
 
 def('panel', async (r) => panelView(scope(r), contextIssue(r)));

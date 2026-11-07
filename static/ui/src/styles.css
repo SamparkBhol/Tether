@@ -1039,3 +1039,32 @@ textarea {
 .policy-odd {
   color: var(--ds-text-warning, #a54800);
 }
+
+.sample {
+  margin-top: var(--ds-space-200, 16px);
+}
+
+.row-pace {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-100, 8px);
+}
+
+.delta {
+  padding: 0 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.delta-late {
+  color: var(--ds-text-danger, #ae2e24);
+  background: var(--ds-background-danger, #ffeceb);
+}
+
+.delta-ok {
+  color: var(--ds-text-success, #216e4e);
+  background: var(--ds-background-success, #dcfff1);
+}

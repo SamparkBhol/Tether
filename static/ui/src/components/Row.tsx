@@ -34,7 +34,17 @@ export const Row = ({ card, perspective, teamName, onChanged, open = false }: Pr
             {proposing && <span className="row-was">{dayLabel(card.terms.dueDate)}</span>}
             {dayLabel(due)}
           </span>
-          <Odds p={odds} />
+          <span className="row-pace">
+            {card.delta !== null && !proposing && (
+              <span
+                className={`delta ${card.delta > 0 ? 'delta-late' : 'delta-ok'}`}
+                title={card.forecastP85 ? `85% likely by ${dayLabel(card.forecastP85)}` : undefined}
+              >
+                {card.delta > 0 ? `+${card.delta}d` : card.delta < 0 ? `${card.delta}d` : 'on pace'}
+              </span>
+            )}
+            <Odds p={odds} />
+          </span>
         </span>
       </button>
       {expanded && (

@@ -43,6 +43,8 @@ export interface Card {
   side: Side | null;
   actions: string[];
   lateBy: number;
+  forecastP85: string | null;
+  delta: number | null;
   updatedAt: string;
 }
 
@@ -91,4 +93,5 @@ export interface Bootstrap {
   here: string | null;
   issueKey: string | null;
   moduleKey: string | null;
+  sample: boolean;
 }

@@ -5,7 +5,8 @@ export type Job =
   | { kind: 'replan'; reason: string; teams?: string[] }
   | { kind: 'issue'; key: string; changelogId?: string; statusCategory?: string }
   | { kind: 'migrate' }
-  | { kind: 'sync'; accountId?: string };
+  | { kind: 'sync'; accountId?: string }
+  | { kind: 'sample'; accountId: string; remove?: boolean };
 
 const queue = new Queue({ key: 'tether-work' });
 

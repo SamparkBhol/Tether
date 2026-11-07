@@ -37,7 +37,9 @@ export const Panel = ({ boot }: { boot: Bootstrap }) => {
       type: 'forge',
       agentKey: 'tether-agent',
       agentName: 'Tether',
-      prompt: `What is ${data.issue.key} waiting on from other teams, and is any of it at risk?`,
+      prompt: data.waitingOn.some((c) => c.state === 'at_risk' || c.state === 'renegotiating')
+        ? `Something ${data.issue.key} needs from another team is slipping. Explain why, what it pushes back, and what I can do.`
+        : `What is ${data.issue.key} waiting on from other teams, and is any of it at risk?`,
     });
 
   const open = data.waitingOn.filter((c) => !['delivered', 'declined', 'withdrawn'].includes(c.state));

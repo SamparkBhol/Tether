@@ -13,13 +13,15 @@ modules:
       resource: ui
       resolver:
         function: resolver
-  jira:issuePanel:
+  jira:issueContext:
     - key: tether-panel
       title: Tether
-      icon: resource:ui;tether.svg
+      label: Tether
       resource: ui
       resolver:
         function: resolver
+      dynamicProperties:
+        function: context-status
   jira:issueAction:
     - key: tether-ask
       title: Ask another team
@@ -51,6 +53,7 @@ modules:
         trade-offs before anything is sent.
       icon: resource:ui;tether.svg
       prompt: resource:prompts;tether.txt
+      followUpPrompt: Suggest one sensible next step, such as checking what slips downstream or raising the ask, based only on what the tools returned.
       conversationStarters:
         - I need Legal to review our pricing terms before launch
         - What are we waiting on from other teams?
@@ -67,6 +70,7 @@ modules:
         spelled out.
       icon: resource:ui;tether.svg
       prompt: resource:prompts;desk.txt
+      followUpPrompt: Suggest one sensible next step for the team lead, such as countering with the suggested option or checking slip impact, based only on what the tools returned.
       conversationStarters:
         - What is waiting for my team's answer?
         - Which of our promises are slipping?
@@ -378,6 +382,8 @@ modules:
   function:
     - key: resolver
       handler: index.resolver
+    - key: context-status
+      handler: index.contextStatus
     - key: on-issue
       handler: index.onIssue
     - key: on-lifecycle

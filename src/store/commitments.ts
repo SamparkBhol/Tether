@@ -19,6 +19,7 @@ interface Row {
   confidence: number | null;
   committed_confidence: number | null;
   delivered_at: string | null;
+  forecast_p85: string | null;
   version: number;
   created_at: string;
   updated_at: string;
@@ -40,6 +41,7 @@ const fromRow = (r: Row): Commitment => ({
   confidence: r.confidence === null ? undefined : Number(r.confidence),
   committedConfidence: r.committed_confidence === null ? undefined : Number(r.committed_confidence),
   deliveredAt: r.delivered_at ?? undefined,
+  forecastP85: r.forecast_p85 ?? undefined,
   version: Number(r.version),
   createdAt: r.created_at,
   updatedAt: r.updated_at,
@@ -98,8 +100,10 @@ export const saveCommitment = async (c: Commitment, expectedVersion: number) => 
 
 export const setOwnerIssue = (id: string, key: string) => exec('UPDATE commitments SET owner_issue_key = ? WHERE id = ?', key, id);
 
-export const setConfidence = (id: string, confidence: number) =>
-  exec('UPDATE commitments SET confidence = ? WHERE id = ?', confidence, id);
+export const setConfidence = (id: string, confidence: number, p85?: string) =>
+  p85
+    ? exec('UPDATE commitments SET confidence = ?, forecast_p85 = ? WHERE id = ?', confidence, p85, id)
+    : exec('UPDATE commitments SET confidence = ? WHERE id = ?', confidence, id);
 
 export const openCommitments = async () =>
   (await rows<Row>(`SELECT * FROM commitments WHERE state IN (${placeholders(OPEN.length)}) LIMIT 2000`, ...OPEN)).map(fromRow);

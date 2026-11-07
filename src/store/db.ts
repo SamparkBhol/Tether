@@ -3,7 +3,7 @@ import sql from '@forge/sql';
 import { log, sleep } from '../lib/util';
 import { migrations } from './schema';
 
-const SCHEMA_KEY = 'schema:ready:v013';
+const SCHEMA_KEY = 'schema:ready:v014';
 let ready = false;
 
 export const migrate = async () => {
