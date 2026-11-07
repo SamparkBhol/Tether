@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { dayLabel } from '../format';
+import { gapText, livery, sector, sectorWords } from '../livery';
 import type { Card } from '../types';
 import { IssueLink, Odds, StateTag, Team } from './bits';
 import { Detail } from './Detail';
@@ -19,7 +20,7 @@ export const Row = ({ card, perspective, teamName, onChanged, open = false }: Pr
   const due = proposing ? card.pendingTerms!.dueDate : card.terms.dueDate;
   const odds = proposing && card.pendingTerms!.confidence !== undefined ? card.pendingTerms!.confidence : card.confidence;
   return (
-    <li className={`row row-${card.state}`}>
+    <li className={`row row-${card.state}`} style={{ ['--stripe' as string]: livery(other?.id) }}>
       <button className="row-head" aria-expanded={expanded} onClick={() => setExpanded((v) => !v)}>
         <Team team={other} size="small" />
         <span className="row-title">
@@ -37,10 +38,10 @@ export const Row = ({ card, perspective, teamName, onChanged, open = false }: Pr
           <span className="row-pace">
             {card.delta !== null && !proposing && (
               <span
-                className={`delta ${card.delta > 0 ? 'delta-late' : 'delta-ok'}`}
-                title={card.forecastP85 ? `85% likely by ${dayLabel(card.forecastP85)}` : undefined}
+                className={`gap gap-${sector(card.delta)}`}
+                title={card.forecastP85 ? `85% likely by ${dayLabel(card.forecastP85)}, ${sectorWords[sector(card.delta)]}` : undefined}
               >
-                {card.delta > 0 ? `+${card.delta}d` : card.delta < 0 ? `${card.delta}d` : 'on pace'}
+                {gapText(card.delta)}
               </span>
             )}
             <Odds p={odds} />

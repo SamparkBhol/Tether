@@ -44,57 +44,58 @@ export const Panel = ({ boot }: { boot: Bootstrap }) => {
 
   const open = data.waitingOn.filter((c) => !['delivered', 'declined', 'withdrawn'].includes(c.state));
 
+  const risky = open.filter((c) => c.state === 'at_risk' || c.state === 'renegotiating').length;
+  const tone = risky ? 'low' : open.some((c) => c.state === 'proposed' || c.state === 'countered') ? 'tight' : 'good';
+
   return (
     <div className="panel">
       {data.readiness && open.length > 0 && (
-        <p className="readiness">
-          Everything this needs from other teams lands by <strong>{dayLabel(data.readiness.p85)}</strong> 85% of the time, and by{' '}
-          {dayLabel(data.readiness.p50)} half the time.
-        </p>
+        <div className={`verdict-card verdict-${tone}`}>
+          <p className="verdict-label">Everything it needs from other teams</p>
+          <p className="verdict-date">{dayLabel(data.readiness.p85)}</p>
+          <p className="verdict-sub">
+            85% sure, and half the time by {dayLabel(data.readiness.p50)}
+            {risky ? `. ${risky} promise${risky === 1 ? ' is' : 's are'} slipping.` : '.'}
+          </p>
+        </div>
       )}
-      <Section
-        title="Waiting on other teams"
-        aside={
-          <span className="section-actions">
-            {rovoOn && (
-              <Button appearance="subtle" spacing="compact" onClick={askTether}>
-                Ask in Rovo
-              </Button>
-            )}
-            {data.waitingOn.length > 0 && (
-              <Button appearance="primary" spacing="compact" onClick={ask}>
-                Ask another team
-              </Button>
-            )}
-          </span>
-        }
-      >
-        {data.waitingOn.length ? (
-          <ul className="rows">
+      {data.waitingOn.length ? (
+        <>
+          <ul className="rows rows-compact">
             {data.waitingOn.map((c) => (
               <Row key={c.id} card={c} perspective="requester" teamName={teamName} onChanged={reload} />
             ))}
           </ul>
-        ) : (
-          <div className="cta">
-            <svg className="cta-mark" viewBox="0 0 64 24" aria-hidden="true">
-              <path d="M8 12 C 24 2, 40 22, 56 12" />
-              <circle cx="8" cy="12" r="6" className="cta-a" />
-              <circle cx="56" cy="12" r="6" className="cta-b" />
-            </svg>
-            <div className="cta-text">
-              <p className="cta-title">Need something from another team?</p>
-              <p>A review, an API, a sign-off. Ask here and you'll get a real date with odds, not a "we'll try".</p>
-            </div>
+          <div className="panel-actions">
             <Button appearance="primary" onClick={ask}>
               Ask another team
             </Button>
+            {rovoOn && (
+              <Button appearance="subtle" onClick={askTether}>
+                {risky ? 'Ask Rovo why' : 'Ask in Rovo'}
+              </Button>
+            )}
           </div>
-        )}
-      </Section>
+        </>
+      ) : (
+        <div className="cta">
+          <svg className="cta-mark" viewBox="0 0 64 24" aria-hidden="true">
+            <path d="M8 12 C 24 2, 40 22, 56 12" />
+            <circle cx="8" cy="12" r="6" className="cta-a" />
+            <circle cx="56" cy="12" r="6" className="cta-b" />
+          </svg>
+          <div className="cta-text">
+            <p className="cta-title">Need something from another team?</p>
+            <p>A review, an API, a sign-off. Ask here and get a real date with odds, not a "we'll try".</p>
+          </div>
+          <Button appearance="primary" onClick={ask}>
+            Ask another team
+          </Button>
+        </div>
+      )}
       {data.promisedTo.length > 0 && (
         <Section title="Promised to other teams">
-          <ul className="rows">
+          <ul className="rows rows-compact">
             {data.promisedTo.map((c) => (
               <Row key={c.id} card={c} perspective="owner" teamName={teamName} onChanged={reload} />
             ))}

@@ -1,10 +1,10 @@
 import Button from '@atlaskit/button/new';
 import { useMemo, useState } from 'react';
 import { call, useCall, useChanges } from '../api';
-import { Empty, Loading, Problem, Section } from '../components/bits';
-import { Row } from '../components/Row';
-import { TeamMap, type Edge } from '../components/TeamMap';
-import { RemoveSample, SampleCard } from '../components/Sample';
+import { Empty, Loading, Problem } from '../components/bits';
+import { RemoveSample, SampleButton, SampleCard } from '../components/Sample';
+import { Tower } from '../components/Tower';
+import { livery } from '../livery';
 import type { Bootstrap, Card, TeamLite } from '../types';
 import { Desk } from './Desk';
 
@@ -12,10 +12,11 @@ interface Ledger {
   myTeams: string[];
   teams: TeamLite[];
   nodes: TeamLite[];
-  edges: Edge[];
   commitments: Card[];
   stats: { open: number; atRisk: number; pending: number; delivered: number };
 }
+
+const LIVE = new Set(['proposed', 'countered', 'committed', 'at_risk', 'renegotiating']);
 
 export const Home = ({ boot, refreshBoot }: { boot: Bootstrap; refreshBoot: () => void }) => {
   const [tab, setTab] = useState<'desk' | 'all'>(boot.myTeams.length ? 'desk' : 'all');
@@ -26,8 +27,11 @@ export const Home = ({ boot, refreshBoot }: { boot: Bootstrap; refreshBoot: () =
   const names = useMemo(() => new Map(boot.teams.map((t) => [t.id, t.name])), [boot.teams]);
   const teamName = (id: string) => names.get(id) ?? 'another team';
   const mine = boot.teams.filter((t) => boot.myTeams.includes(t.id));
+  const refresh = () => (refreshBoot(), void ledger.reload());
 
-  const shown = (ledger.data?.commitments ?? []).filter((c) => !focus || c.owner?.id === focus || c.requester?.id === focus);
+  const live = (ledger.data?.commitments ?? []).filter((c) => LIVE.has(c.state));
+  const done = (ledger.data?.commitments ?? []).filter((c) => !LIVE.has(c.state));
+  const involved = (ledger.data?.nodes ?? []).filter((t): t is TeamLite => !!t);
 
   return (
     <div className="home">
@@ -41,8 +45,8 @@ export const Home = ({ boot, refreshBoot }: { boot: Bootstrap; refreshBoot: () =
           </button>
         </nav>
         <span className="section-actions">
-          {boot.sample && <RemoveSample onDone={() => (refreshBoot(), void ledger.reload())} />}
-          <Button appearance="subtle" onClick={() => (void call('bootstrap', { refresh: true }).then(refreshBoot))}>
+          {boot.sample ? <RemoveSample onDone={refresh} /> : <SampleButton onDone={refresh} />}
+          <Button appearance="subtle" onClick={() => void call('bootstrap', { refresh: true }).then(refreshBoot)}>
             Refresh teams
           </Button>
         </span>
@@ -102,29 +106,49 @@ export const Home = ({ boot, refreshBoot }: { boot: Bootstrap; refreshBoot: () =
           <Problem message={ledger.error} onRetry={ledger.reload} />
         ) : ledger.data ? (
           <>
-            <p className="stats">
-              <strong>{ledger.data.stats.open}</strong> open commitments, <strong>{ledger.data.stats.atRisk}</strong> slipping,{' '}
-              <strong>{ledger.data.stats.pending}</strong> waiting for an answer, <strong>{ledger.data.stats.delivered}</strong> delivered.
+            <div className="board-top">
+              <p className="board-count">
+                <strong>{ledger.data.stats.open + ledger.data.stats.pending}</strong> promises in play
+              </p>
+              <p className="board-split">
+                <span className="split split-risk">{ledger.data.stats.atRisk} slipping</span>
+                <span className="split split-wait">{ledger.data.stats.pending} waiting for an answer</span>
+                <span className="split split-done">{ledger.data.stats.delivered} delivered</span>
+              </p>
+            </div>
+            {involved.length > 1 && (
+              <div className="team-filter" role="group" aria-label="Show one team">
+                {involved.map((t) => (
+                  <button
+                    key={t.id}
+                    aria-pressed={focus === t.id}
+                    style={{ ['--stripe' as string]: livery(t.id) }}
+                    onClick={() => setFocus((f) => (f === t.id ? null : t.id))}
+                  >
+                    {t.name}
+                  </button>
+                ))}
+              </div>
+            )}
+            {live.length ? (
+              <Tower rows={live} teamName={teamName} onChanged={ledger.reload} focus={focus} />
+            ) : boot.sample ? (
+              <Empty title="No open promises">Open any work item and use Ask another team to start one.</Empty>
+            ) : (
+              <SampleCard onDone={refresh} />
+            )}
+            {done.length > 0 && (
+              <details className="done">
+                <summary>
+                  {done.length} closed promise{done.length === 1 ? '' : 's'}
+                </summary>
+                <Tower rows={done} teamName={teamName} onChanged={ledger.reload} />
+              </details>
+            )}
+            <p className="muted small board-key">
+              Gap is how far the date Tether is 85% sure of sits from the promised date. Purple is comfortably early, green on pace, yellow a few days behind and red
+              well behind.
             </p>
-            {ledger.data.edges.length > 0 ? (
-              <Section title="Who owes whom" aside={focus && <button className="link" onClick={() => setFocus(null)}>Show all teams</button>}>
-                <TeamMap nodes={ledger.data.nodes} edges={ledger.data.edges} selected={focus} onSelect={(id) => setFocus((f) => (f === id ? null : id))} />
-                <p className="muted small">Arrows point from the team doing the work to the team waiting on it. Dashed means not agreed yet.</p>
-              </Section>
-            ) : null}
-            <Section title={focus ? `Involving ${teamName(focus)}` : 'All commitments'}>
-              {shown.length ? (
-                <ul className="rows">
-                  {shown.map((c) => (
-                    <Row key={c.id} card={c} perspective={c.side ?? 'requester'} teamName={teamName} onChanged={ledger.reload} />
-                  ))}
-                </ul>
-              ) : boot.sample ? (
-                <Empty title="No commitments yet">Open any work item and use Ask another team to start one.</Empty>
-              ) : (
-                <SampleCard onDone={() => (refreshBoot(), void ledger.reload())} />
-              )}
-            </Section>
           </>
         ) : null)}
     </div>

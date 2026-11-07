@@ -45,6 +45,42 @@ export const SampleCard = ({ onDone }: { onDone: () => void }) => {
   );
 };
 
+const useBuild = (onDone: () => void) => {
+  const [state, setState] = useState<'idle' | 'building' | 'failed'>('idle');
+  useChanges(
+    (c) => {
+      if (c.state === 'failed') {
+        setState('failed');
+        showFlag({ id: 'sample-failed', title: (c as unknown as { message?: string }).message ?? 'The sample launch could not be built.', type: 'error', isAutoDismiss: true });
+        return;
+      }
+      setState('idle');
+      showFlag({ id: 'sample-ready', title: 'Sample launch ready', description: 'Five teams, six promises. Open any row to see how the forecast was made.', type: 'success', isAutoDismiss: true });
+      onDone();
+    },
+    (c) => c.kind === 'sample' && c.state !== 'removed',
+  );
+  const start = async () => {
+    setState('building');
+    try {
+      await call('sample', {});
+    } catch (e) {
+      setState('failed');
+      showFlag({ id: 'sample-err', title: (e as Error).message, type: 'error', isAutoDismiss: true });
+    }
+  };
+  return { state, start };
+};
+
+export const SampleButton = ({ onDone }: { onDone: () => void }) => {
+  const { state, start } = useBuild(onDone);
+  return (
+    <Button onClick={start} isDisabled={state === 'building'}>
+      {state === 'building' ? 'Building sample launch' : 'Build a sample launch'}
+    </Button>
+  );
+};
+
 export const RemoveSample = ({ onDone }: { onDone: () => void }) => {
   const [busy, setBusy] = useState(false);
   useChanges(
