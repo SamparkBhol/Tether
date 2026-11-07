@@ -8,6 +8,8 @@ It lives inside Jira, Confluence and Rovo. There is no new tool to learn and no 
 
 The context comes from what Atlassian already knows: which team owns each space, which goals a piece of work serves, how fast each team really finishes work and who is waiting on whom. The confidence is literal. Every promise carries the odds of landing on time, and Tether keeps score of whether those odds turned out to be honest.
 
+**[Watch the demo](https://youtu.be/R0dFpnE9hIQ)** (under five minutes) or **[install Tether on your site](#install-and-try-it)**.
+
 ## Why
 
 Most launches don't slip because one team is slow. They slip because one team needed a review, an API or a sign-off from another team, asked for it in a chat thread, got a "sure, should be fine" and planned around it. Weeks later the date quietly moves and nobody downstream finds out until it is too late.
@@ -52,15 +54,54 @@ Tether shows up where people already work. It sits in the Jira work item panel a
 - The same actions are exposed over `rovo:mcp`, so a coding agent in your editor can check what your team is waiting on or raise an ask while you plan a change.
 - Tether reads the Teamwork Graph for the teams that own each space, who belongs to each team, the goals a work item serves and the pull requests and deployments linked to it.
 
-## Install
+## Install and try it
 
-You need a Jira Cloud site with Rovo. Confluence is optional and adds the launch readiness macro.
+This section walks a judge or a new team from install to every feature in about ten minutes.
 
-1. Open the installation link and install into Jira, then Confluence if you use it.
-2. An org admin approves the Teamwork Graph scopes during install.
-3. Open **Apps > Tether** and pick your team.
+### What you need
 
-To see it working before anyone raises a real ask, open **Across teams** and choose **Build a sample launch**. Tether creates a small launch in your own spaces, with marketing asking legal, platform, design and security for what it needs and platform asking security in turn. Everything it creates is labelled `tether-sample` and comes out again with **Remove sample launch**.
+A Jira Cloud site where you are a site admin. Rovo should be turned on for the site if you want to try the agents. Confluence is optional and adds the launch readiness macro. Tether is free and has no billing.
+
+### Install
+
+1. Open the [installation link](https://developer.atlassian.com/console/install/8943838a-186c-4f4f-99d1-2ee293472e64?signature=AYABeBD2cNqQvMO3JpgzZ5pM3AkAAAADAAdhd3Mta21zAEthcm46YXdzOmttczp1cy13ZXN0LTI6NzA5NTg3ODM1MjQzOmtleS83MDVlZDY3MC1mNTdjLTQxYjUtOWY5Yi1lM2YyZGNjMTQ2ZTcAuAECAQB4CxqLTo9l4lqXuFjNim1xJM%2Bp%2F3TVP9xHS2BrU5DRRucBCMZ%2BovKO5SgebI9IJqb9yAAAAH4wfAYJKoZIhvcNAQcGoG8wbQIBADBoBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDAm2%2F3NEvqkd3jfdbwIBEIA7Fqe2o8YBa4y%2F5ddq%2Fbd2ehoZ8IsNk%2FMYu%2Bm9n1RJYjYNM0hri1Vcex1kd9pWfpZcyfzpz8%2BIGFIP%2BXwAB2F3cy1rbXMAS2Fybjphd3M6a21zOmV1LXdlc3QtMTo3MDk1ODc4MzUyNDM6a2V5LzQ2MzBjZTZiLTAwYzMtNGRlMi04NzdiLTYyN2UyMDYwZTVjYwC4AQICAHi9bVMAkme4qVQX1fQHo6ePw3H40A7cGfz7yrmSfBWMXgHtoMIT%2Bqm1cwVEJ47KXnC2AAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMuTY1uxKJzX0GN1MNAgEQgDvwI8L2YftJO9zEoFQgo2EJ%2F2Cv9NNNqKrhHyww3yFsWdyTveBozBrrFycFkn48y%2Fu0ZDtXc81s70iYlQAHYXdzLWttcwBLYXJuOmF3czprbXM6dXMtZWFzdC0xOjcwOTU4NzgzNTI0MzprZXkvNmMxMjBiYTAtNGNkNS00OTg1LWI4MmUtNDBhMDQ5NTJjYzU3ALgBAgIAeDYASx0XCjkny4iLV6vz%2BKtEGSGT6kdt0QRpkn6D%2FlVEAdrxsdza%2FxyQmMBQ83VlHB0AAAB%2BMHwGCSqGSIb3DQEHBqBvMG0CAQAwaAYJKoZIhvcNAQcBMB4GCWCGSAFlAwQBLjARBAx9azf6cQ2rEWdjBmgCARCAO%2F3%2FlvJ8EpTZTZpPG7KiOeGNAzlWZrB8N9oBkV1IGvXwI1L%2FIGYo9kb4feOwO2MVZ0C4HquIOlGAeJwoAgAAAAAMAAAQAAAAAAAAAAAAAAAAAMZfz%2Fyb0Yi6K3D1Kum7647%2F%2F%2F%2F%2FAAAAAQAAAAAAAAAAAAAAAQAAADK6BYdcXpNPN0CwY8EuTCBs3M3Qr%2F9iO%2FhtFHq5Qjj7kR6VxKR%2FmrWryl0A77qBPoGAxFeoiPUt2AGx2hJhijPQfc8%3D&product=jira&product=confluence).
+2. Pick your site and install into Jira, then into Confluence if you have it.
+3. Approve the permissions when Atlassian asks. If your organisation asks for approval of the Teamwork Graph scopes, approve those too.
+4. In Jira open **Apps** in the sidebar and choose **Tether**.
+
+### Build a sample launch
+
+Your site probably has no cross team asks yet, so Tether can make a small one for you.
+
+1. On the Tether page choose **Across teams** and click **Build a sample launch**.
+2. Wait about a minute. Tether picks spaces on your site, creates a few work items labelled `tether-sample` and raises asks between them, with marketing asking legal, platform, design and security, and platform asking security in turn.
+3. The board fills in with every promise, the most at risk first.
+
+When you are done, **Remove sample launch** takes out everything the sample created.
+
+### A five minute tour
+
+1. **The board.** On **Across teams**, open any row. You see the forecast chart, the arithmetic behind it, the options that would make the date work and the history of the promise. The gap column shows how far each forecast sits from its promise, purple when comfortably early and red when well behind.
+2. **A team's desk.** Choose **Your team** and pick a team you can work in. Asks waiting for that team appear first with a suggested answer. Use **Commit**, **Counter** or **Decline**, and open **Team policy** to change capacity or the share of time given to asks.
+3. **Raise your own ask.** Open any work item, then **More actions** and **Ask another team**. Pick a team, a date and the number of pieces of work, and watch the odds and the options change before you send it.
+4. **The work item panel.** On a work item, open the app actions and choose **Tether**. The panel shows when everything the item needs from other teams will land. The **Tether** glance in the sidebar shows the same answer in one line.
+5. **Answering for another team.** Once you pick your team, Tether only lets you answer for that team, the same way it works for a real colleague. To answer as a second team, open its desk from **Another team…** and choose **I'm on this team**.
+6. **Confluence.** On any page type `/Tether`, choose **Tether launch readiness**, enter a work item key and publish. The page shows the live readiness for that launch.
+
+### Rovo agents
+
+Open **Ask Rovo**, open the agent list and pick **Tether** or **Tether Desk**. Try "What is waiting on my team, and is anything we promised slipping?" with Tether Desk, or "We're at an offsite next week, drop our capacity to 3 items a week". Changes ask you to confirm first. From a work item panel, **Ask in Rovo** opens the Tether agent with that item in context.
+
+### MCP
+
+A site admin turns on the Tether tools under **Atlassian Administration**, **Apps**, **Connected apps**. Then add `https://mcp.atlassian.com/forge/8943838a-186c-4f4f-99d1-2ee293472e64` as a remote MCP server in a client such as Cursor and sign in when it asks. The twelve tools match the Rovo actions.
+
+### If something looks off
+
+- **No agents in Rovo.** Rovo has to be active on the site, and new apps can take a few minutes to appear in the agent list.
+- **No goals on asks.** Goals come from Atlassian Goals through the Teamwork Graph, so you only see them for work items linked to goals you can see.
+- **A team is missing from the picker.** Tether lists teams that own a Jira space. Use **Refresh teams** after adding a space.
+- **Forecasts say they use declared capacity.** That means the space has no recently finished work yet. Tether says so on the desk and uses the capacity in **Team policy** until history builds up.
 
 ## Use it from your editor
 
