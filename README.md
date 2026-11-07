@@ -44,6 +44,26 @@ You need a Jira Cloud site with Rovo. Confluence is optional and adds the launch
 2. An org admin approves the Teamwork Graph scopes during install.
 3. Open **Apps > Tether** and pick your team.
 
+To see it working before anyone raises a real ask, open **Across teams** and choose **Build a sample launch**. Tether creates a small launch in your own spaces, with marketing asking legal, platform, design and security for what it needs and platform asking security in turn. Everything it creates is labelled `tether-sample` and comes out again with **Remove sample launch**.
+
+## Use it from your editor
+
+Tether's tools are available to any MCP client that supports remote servers with sign-in, such as Cursor or VS Code.
+
+1. A site admin turns on the Tether tools under **Atlassian Administration > Apps > Connected apps**.
+2. Add `https://mcp.atlassian.com/forge/8943838a-186c-4f4f-99d1-2ee293472e64` as a remote MCP server in your client and sign in when it asks.
+3. Ask things like "what is PLAT-311 waiting on" or "ask Legal for a review of the export terms by Dec 12".
+
+When a coding agent raises an ask it says so, and the owning team sees which client asked on whose behalf.
+
+## Automation recipes
+
+Tether's agents can sit inside the Automation rules you already have. A few that work well:
+
+- **Monday slip digest.** Scheduled every Monday, then "Use Rovo agent" with Tether Desk and the prompt "List my team's promises that are slipping and what each one needs". Send the result to your team channel.
+- **Ask on label.** When a work item gets the label `needs-legal`, use the Tether agent with "Draft an ask to Legal for {{issue.key}}, needed by {{issue.duedate}}". Tether drafts it and a person confirms.
+- **Launch readiness check.** When a launch epic moves to In review, ask Tether "What is {{issue.key}} waiting on from other teams and how likely is all of it by {{issue.duedate}}" and post the answer as a comment.
+
 ## Develop
 
 ```bash
@@ -58,6 +78,8 @@ The backend lives in `src` and is grouped by what it does. `domain` holds the co
 ## Privacy
 
 Tether runs on Atlassian. It stores asks, commitments and forecast snapshots in Forge SQL inside your site, and sends nothing anywhere else.
+
+Every read happens as the person looking, so nobody sees a team, a work item or a goal through Tether that Jira wouldn't already show them. Live updates carry only ids and states, never titles or descriptions, and every screen refetches through those permission checked calls when something changes.
 
 ## License
 
