@@ -9,10 +9,11 @@ import { todayIso } from '../lib/util';
 import { draftAsk, graphFor, raiseAsk } from '../services/asks';
 import { actAsUser } from '../services/lifecycle';
 import { loadModel } from '../services/model';
+import { forecastCommitment } from '../services/forecasting';
 import { day } from '../services/notify';
 import { findTeams, myTeamIds, syncTeams } from '../services/teams';
 import { deskView, detailView, panelView } from '../services/views';
-import { getCommitment, openCommitments, touchingIssues } from '../store/commitments';
+import { forOwner, getCommitment, openCommitments, touchingIssues } from '../store/commitments';
 import { getPolicy, getTeam, savePolicy } from '../store/records';
 import { access } from '../services/access';
 import { enqueue } from '../services/queue';
@@ -296,16 +297,26 @@ export const policy = guard('update-team-policy', async (p: ActionPayload, ctx: 
   const saved = await savePolicy(next, s.accountId ?? 'agent');
   if (!saved) throw invalid('Someone changed this policy a moment ago. Try again.');
   await forgetThroughput(team.id);
+  const model = await loadModel(team);
+  const label = await names(s);
+  const owed = (await forOwner(team.id, 50)).filter((c) => isOpen(c.state)).slice(0, 12);
+  const impact = [];
+  for (const c of owed) {
+    const after = (await forecastCommitment(c, model)).probabilityByDue;
+    impact.push({ title: c.title, for: label.get(c.requesterTeamId) ?? 'another team', dueLabel: day(c.terms.dueDate), beforePct: pct(c.confidence), afterPct: pct(after), nowAtRisk: after < saved.riskThreshold });
+  }
   await enqueue({ kind: 'replan', reason: 'policy', teams: [team.id] }, 2);
   return {
     ok: true,
     team: team.name,
+    impact,
+    atRiskNow: impact.filter((i) => i.nowAtRisk).length,
     policy: {
       askSharePct: Math.round(saved.askShare * 100),
       weeklyCapacity: Math.round(saved.declaredDailyCapacity * 5 * 10) / 10,
       promiseAtPct: Math.round(saved.targetConfidence * 100),
       atRiskBelowPct: Math.round(saved.riskThreshold * 100),
     },
-    note: 'Forecasts for this team update within a minute.',
+    note: 'impact holds the new odds for every promise this team owns, computed with the new policy. Report these, not earlier numbers. Teams waiting downstream are replanned and notified within a minute.',
   };
 });
