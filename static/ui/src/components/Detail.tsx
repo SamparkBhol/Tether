@@ -3,13 +3,22 @@ import { dayLabel, pct } from '../format';
 import type { Card, CurvePoint, Negotiation } from '../types';
 import { ActionBar } from './ActionBar';
 import { IssueLink, Loading, Problem } from './bits';
-import { Curve } from './Curve';
+import { Forecast, type ForecastInputs } from './Forecast';
 import { Options } from './Options';
 
 interface DetailData {
   commitment: Card;
   issues: { key: string; summary: string; status: string; statusCategory: string }[];
-  forecast: { basis: string; windowEnd: string | null; probability: number; dates: { p50: string; p85: string }; curve: CurvePoint[]; itemsAhead: number };
+  forecast: {
+    basis: string;
+    windowEnd: string | null;
+    probability: number;
+    dates: { p50: string; p85: string };
+    curve: CurvePoint[];
+    histogram: { date: string; share: number }[];
+    inputs: ForecastInputs;
+    itemsAhead: number;
+  };
   negotiation: Negotiation | null;
   history: { type: string; at: string; side: string; agent: string | null; reason: string | null; to: string }[];
   trend: { date: string; probability: number }[];
@@ -31,16 +40,6 @@ const EVENT_WORDS: Record<string, string> = {
   broken: 'Missed',
 };
 
-const basisLine = (basis: string, windowEnd: string | null, ahead: number) => {
-  const pace =
-    basis === 'live'
-      ? 'their pace over the last 60 working days'
-      : basis === 'past'
-        ? `their pace in the 60 working days up to ${windowEnd ? dayLabel(windowEnd) : 'their last activity'}`
-        : 'the capacity they declared';
-  return `Based on ${pace}, with ${ahead} item${ahead === 1 ? '' : 's'} ahead in their queue.`;
-};
-
 const who = (side: string, agent: string | null) => (agent === 'policy' ? 'team policy' : agent ? 'Tether' : side === 'owner' ? 'owning team' : side === 'requester' ? 'asking team' : 'Tether');
 
 export const Detail = ({ id, teamName, onChanged }: { id: string; teamName: (id: string) => string; onChanged: () => void }) => {
@@ -54,20 +53,20 @@ export const Detail = ({ id, teamName, onChanged }: { id: string; teamName: (id:
   const needsJoin = !!joinTeam && !c.actions.some((a) => ['accept', 'acceptRenegotiation', 'counter'].includes(a));
   return (
     <div className="detail">
-      {c.pendingTerms && (c.state === 'renegotiating' || c.state === 'countered') && c.pendingTerms.confidence !== undefined ? (
-        <Curve
-          points={data.forecast.curve}
-          neededBy={c.terms.dueDate}
-          neededConfidence={data.forecast.probability}
-          due={c.pendingTerms.dueDate}
-          dueConfidence={c.pendingTerms.confidence}
-        />
-      ) : (
-        <Curve points={data.forecast.curve} neededBy={c.neededBy} due={c.terms.dueDate} dueConfidence={data.forecast.probability} />
-      )}
+      <Forecast
+        curve={data.forecast.curve}
+        histogram={data.forecast.histogram}
+        inputs={data.forecast.inputs}
+        team={c.owner?.name}
+        windowEnd={data.forecast.windowEnd}
+        neededBy={c.terms.dueDate}
+        neededConfidence={data.forecast.probability}
+        proposal={c.pendingTerms && (c.state === 'renegotiating' || c.state === 'countered') ? c.pendingTerms.dueDate : undefined}
+        proposalConfidence={c.pendingTerms?.confidence}
+        proposalLabel={c.pendingTerms ? 'Proposed' : undefined}
+      />
       <p className="detail-basis">
-        {basisLine(data.forecast.basis, data.forecast.windowEnd, data.forecast.itemsAhead)} Half the time it lands by {dayLabel(data.forecast.dates.p50)}, and 85% of
-        the time by {dayLabel(data.forecast.dates.p85)}.
+        Half the time it lands by <strong>{dayLabel(data.forecast.dates.p50)}</strong>, and 85% of the time by <strong>{dayLabel(data.forecast.dates.p85)}</strong>.
       </p>
       {data.negotiation && c.state !== 'committed' && <Options negotiation={data.negotiation} teamName={teamName} />}
       {needsJoin && joinTeam && (

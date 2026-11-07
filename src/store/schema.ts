@@ -97,4 +97,5 @@ export const migrations = migrationRunner
   .enqueue('v009_idx_requester', 'CREATE INDEX idx_commit_requester ON commitments (requester_team_id, state)')
   .enqueue('v010_idx_source', 'CREATE INDEX idx_commit_source ON commitments (source_issue_key)')
   .enqueue('v011_idx_owner_issue', 'CREATE INDEX idx_commit_owner_issue ON commitments (owner_issue_key)')
-  .enqueue('v012_idx_events', 'CREATE INDEX idx_events_commitment ON commitment_events (commitment_id, at)');
+  .enqueue('v012_idx_events', 'CREATE INDEX idx_events_commitment ON commitment_events (commitment_id, at)')
+  .enqueue('v013_snapshot_inputs', 'ALTER TABLE forecast_snapshots ADD COLUMN inputs TEXT');

@@ -4,6 +4,8 @@ import { bullets, doc, link, mention, paragraph, panel, strong, text } from '../
 import { comment } from '../jira/issues';
 import type { As } from '../jira/client';
 import { log } from '../lib/util';
+import type { Option } from '../engine/negotiate/options';
+import type { Decision } from './diagnose';
 
 export const CHANNEL = 'tether:changes';
 
@@ -123,3 +125,43 @@ export const tellDelivered = (as: As, c: Commitment, owner: Team, onTime: boolea
       ),
     ),
   );
+
+const keepLine = (o: Option, owner: Team) => {
+  if (o.kind === 'make_room' && o.askShare)
+    return `Keep ${day(o.dueDate)}: ${owner.name} gives about ${Math.round(o.askShare.to * 100)}% of its time to asks for the next ${o.askShare.weeks} week${o.askShare.weeks === 1 ? '' : 's'}, instead of ${Math.round(o.askShare.from * 100)}% (${pct(o.confidence)} likely).`;
+  if (o.kind === 'jump_queue') {
+    const moved = o.impacts.filter((i) => i.slipDays > 0).map((i) => `"${i.title}" by ${i.slipDays} days`);
+    return `Keep ${day(o.dueDate)}: ${owner.name} does this before lower-priority work${moved.length ? `, pushing ${moved.join(' and ')}` : ''} (${pct(o.confidence)} likely).`;
+  }
+  return `Keep ${day(o.dueDate)} (${pct(o.confidence)} likely).`;
+};
+
+export const tellEscalation = async (
+  as: As,
+  c: Commitment,
+  owner: Team,
+  requesterName: string,
+  reasons: string[],
+  d: Extract<Decision, { kind: 'escalate' }>,
+) => {
+  const choices: unknown[][] = [];
+  if (d.keepDate) choices.push([text(keepLine(d.keepDate, owner))]);
+  if (d.realistic) {
+    const late = Math.round((Date.parse(d.realistic.dueDate) - Date.parse(c.terms.dueDate)) / 86_400_000);
+    choices.push([
+      text(`Or move the date to ${day(d.realistic.dueDate)} (${pct(d.realistic.confidence)} likely). That is ${late} days later, more than Tether will propose on its own.`),
+    ]);
+  }
+  const body = (lead: unknown[]) =>
+    doc(
+      panel(
+        'warning',
+        paragraph(...(lead as never[])),
+        ...(reasons.length ? [bullets(reasons.map((r) => [text(r)]))] : []),
+        ...(choices.length ? [paragraph(strong('Ways forward')), bullets(choices as never)] : []),
+        paragraph(text(`${owner.name} picks one in its Tether desk. Nothing changes until it does.`)),
+      ),
+    );
+  await safeComment(as, c.sourceIssueKey, body([text(`"${c.title}" from `), strong(owner.name), text(` is now ${pct(c.confidence)} likely by ${day(c.terms.dueDate)}.`)]));
+  await safeComment(as, c.ownerIssueKey, body([text(`${requesterName} needs this by ${day(c.terms.dueDate)}, and it is now ${pct(c.confidence)} likely.`)]));
+};

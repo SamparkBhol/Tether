@@ -97,6 +97,10 @@ export const apply = async (
   const requesterId = ask?.createdBy ?? '';
   const as = s.system ? asApp : s.as;
 
+  if (action.kind === 'accept' && next.ownerIssueKey) {
+    const existing = await getIssue(asApp, next.ownerIssueKey);
+    if (existing && !existing.dueDate) await setDueDate(asApp, existing.key, next.terms.dueDate).catch(() => undefined);
+  }
   if (action.kind === 'accept' && !next.ownerIssueKey) {
     const key = await ownerWork(s, next, owner, requester).catch((e) => {
       log('owner_work.failed', { id, message: (e as Error).message });

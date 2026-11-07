@@ -24,6 +24,8 @@ export interface SimulationResult {
   percentile: (q: number) => number;
   dates: { p50: string; p70: string; p85: string; p95: string };
   curve: { date: string; probability: number }[];
+  histogram: { date: string; share: number }[];
+  inputs: { perDay: number; askShare: number; itemsAhead: number; size: number; basis: 'history' | 'declared'; days: number };
   beyondHorizon: number;
 }
 
@@ -92,8 +94,22 @@ export const simulate = (input: SimulationInput): SimulationResult => {
     curve.push({ date: fromDay(d), probability: j / trials });
   }
 
+  const week = 7;
+  const histogram: { date: string; share: number }[] = [];
+  for (let start = first, k = 0; start <= last; start += week) {
+    let n = 0;
+    while (k < trials && sorted[k] < start + week) {
+      n++;
+      k++;
+    }
+    histogram.push({ date: fromDay(start), share: n / trials });
+  }
+  const t = input.throughput;
+  const perDay = t && t.counts.length ? t.total / t.counts.length : input.declaredDailyCapacity;
+  const basis: 'history' | 'declared' = t && t.counts.length ? 'history' : 'declared';
+
   return {
-    basis: input.throughput && input.throughput.counts.length ? 'history' : 'declared',
+    basis,
     trials,
     samples,
     probabilityByDue: onTime / trials,
@@ -105,6 +121,8 @@ export const simulate = (input: SimulationInput): SimulationResult => {
       p95: fromDay(percentile(0.95)),
     },
     curve,
+    histogram,
+    inputs: { perDay, askShare: input.askShare, itemsAhead: input.itemsAhead, size: input.size, basis, days: t?.counts.length ?? 0 },
     beyondHorizon: beyond / trials,
   };
 };

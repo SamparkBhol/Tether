@@ -16,6 +16,7 @@ export interface IssueLite {
   assigneeId?: string;
   dueDate?: string;
   url: string;
+  blockedBy: { key: string; summary: string; projectKey: string; statusCategory: string }[];
 }
 
 interface RawIssue {
@@ -31,12 +32,16 @@ interface RawIssue {
     issuetype?: { name: string };
     assignee?: { accountId: string } | null;
     duedate?: string | null;
+    issuelinks?: {
+      type?: { name?: string };
+      inwardIssue?: { key: string; fields?: { summary?: string; status?: { statusCategory?: { key?: string } } } };
+    }[];
     statuscategorychangedate?: string;
     resolutiondate?: string | null;
   };
 }
 
-const FIELDS = 'summary,description,status,project,parent,issuetype,assignee,duedate';
+const FIELDS = 'summary,description,status,project,parent,issuetype,assignee,duedate,issuelinks';
 
 const browseUrl = (self: string, key: string) => `${new URL(self).origin}/browse/${key}`;
 
@@ -54,6 +59,14 @@ const lite = (r: RawIssue): IssueLite => ({
   assigneeId: r.fields.assignee?.accountId,
   dueDate: r.fields.duedate ?? undefined,
   url: browseUrl(r.self, r.key),
+  blockedBy: (r.fields.issuelinks ?? [])
+    .filter((l) => l.type?.name === 'Blocks' && l.inwardIssue)
+    .map((l) => ({
+      key: l.inwardIssue!.key,
+      summary: l.inwardIssue!.fields?.summary ?? '',
+      projectKey: l.inwardIssue!.key.split('-')[0],
+      statusCategory: l.inwardIssue!.fields?.status?.statusCategory?.key ?? '',
+    })),
 });
 
 export const getIssue = async (as: As, key: string): Promise<IssueLite | null> => {

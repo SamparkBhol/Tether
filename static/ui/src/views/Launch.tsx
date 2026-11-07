@@ -3,7 +3,7 @@ import { view } from '@forge/bridge';
 import { useState } from 'react';
 import { useCall, useChanges } from '../api';
 import { Empty, IssueLink, Loading, Problem } from '../components/bits';
-import { Curve } from '../components/Curve';
+import { Forecast } from '../components/Forecast';
 import { Row } from '../components/Row';
 import { dayLabel, pct } from '../format';
 import type { Bootstrap, Card, CurvePoint } from '../types';
@@ -49,7 +49,7 @@ export const Launch = ({ boot, issueKey }: { boot: Bootstrap; issueKey: string }
               </>
             )}
           </p>
-          <Curve points={data.readiness.curve} neededBy={due ?? undefined} due={data.readiness.p85} />
+          <Forecast curve={data.readiness.curve} neededBy={due ?? undefined} proposal={data.readiness.p85} proposalLabel="Likely" />
         </>
       ) : (
         <Empty title="Nothing to wait on">This launch has no open asks to other teams.</Empty>

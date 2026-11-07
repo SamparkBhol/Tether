@@ -15,13 +15,13 @@ export const ownerQueue = async (teamId: string, exceptId?: string): Promise<Que
 
 export const forecaster = (model: TeamModelView, key: string): Forecaster => {
   const today = toDay(todayIso());
-  return (itemsAhead, size, dueDay, salt) =>
+  return (itemsAhead, size, dueDay, salt, askShare) =>
     simulate({
       today,
       calendar: model.policy,
       throughput: model.throughput,
       declaredDailyCapacity: model.policy.declaredDailyCapacity,
-      askShare: model.policy.askShare,
+      askShare: askShare ?? model.policy.askShare,
       itemsAhead,
       size,
       dueDay,
@@ -47,5 +47,7 @@ export const negotiateFor = async (
     forecast: forecaster(model, item.id),
     targetConfidence: model.policy.targetConfidence,
     riskThreshold: model.policy.riskThreshold,
+    askShare: model.policy.askShare,
+    today: toDay(todayIso()),
   });
 };

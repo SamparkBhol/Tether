@@ -191,6 +191,8 @@ export const detailView = async (s: Scope, id: string) => {
       probability: live.probabilityByDue,
       dates: live.dates,
       curve: live.curve,
+      histogram: live.histogram,
+      inputs: live.inputs,
       itemsAhead: sizeAhead(queue, item),
     },
     negotiation,

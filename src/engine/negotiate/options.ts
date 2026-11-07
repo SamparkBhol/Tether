@@ -2,7 +2,7 @@ import { fromDay, toDay } from '../forecast/calendar';
 import type { SimulationResult } from '../forecast/montecarlo';
 import { insertAt, ordered, placedBefore, sizeAhead, type QueueItem } from './queue';
 
-export type OptionKind = 'as_asked' | 'later_date' | 'jump_queue' | 'split_scope';
+export type OptionKind = 'as_asked' | 'later_date' | 'jump_queue' | 'split_scope' | 'make_room';
 
 export interface Impact {
   commitmentId: string;
@@ -22,6 +22,7 @@ export interface Option {
   meetsNeededBy: boolean;
   impacts: Impact[];
   remainder?: { size: number; dueDate: string; confidence: number };
+  askShare?: { from: number; to: number; weeks: number };
   score: number;
 }
 
@@ -31,10 +32,12 @@ export interface Negotiation {
   recommended: Option;
   verdict: 'easy' | 'tight' | 'needs_tradeoff' | 'later' | 'not_this_quarter';
   curve: { date: string; probability: number }[];
+  histogram: { date: string; share: number }[];
+  inputs: SimulationResult['inputs'];
   basis: 'history' | 'declared';
 }
 
-export type Forecaster = (itemsAhead: number, size: number, dueDay: number, salt: string) => SimulationResult;
+export type Forecaster = (itemsAhead: number, size: number, dueDay: number, salt: string, askShare?: number) => SimulationResult;
 
 export interface NegotiationInput {
   ask: QueueItem;
@@ -42,6 +45,8 @@ export interface NegotiationInput {
   forecast: Forecaster;
   targetConfidence: number;
   riskThreshold: number;
+  askShare: number;
+  today: number;
 }
 
 const calendarGap = (a: string, b: string) => toDay(a) - toDay(b);
@@ -50,13 +55,14 @@ const score = (o: Omit<Option, 'score'>, neededBy: string) => {
   const late = Math.max(0, calendarGap(o.dueDate, neededBy));
   const harm = o.impacts.reduce((s, i) => s + i.slipDays + Math.max(0, i.confidenceBefore - i.confidenceAfter) * 20, 0);
   const partial = o.remainder ? 12 + o.remainder.size * 4 : 0;
-  return (o.meetsNeededBy ? 100 : 0) + o.confidence * 20 - late * 3 - harm - partial;
+  const effort = o.askShare ? (o.askShare.to - o.askShare.from) * 60 : 0;
+  return (o.meetsNeededBy ? 100 : 0) + o.confidence * 20 - late * 3 - harm - partial - effort;
 };
 
 const finish = (o: Omit<Option, 'score'>, neededBy: string): Option => ({ ...o, score: score(o, neededBy) });
 
 export const negotiate = (input: NegotiationInput): Negotiation => {
-  const { ask, queue, forecast, targetConfidence, riskThreshold } = input;
+  const { ask, queue, forecast, targetConfidence, riskThreshold, askShare, today } = input;
   const neededDay = toDay(ask.dueDate);
   const options: Option[] = [];
 
@@ -138,6 +144,27 @@ export const negotiate = (input: NegotiationInput): Negotiation => {
       );
     }
 
+    for (let share = Math.round((askShare + 0.05) * 20) / 20; share <= 0.8 + 1e-9; share = Math.round((share + 0.05) * 20) / 20) {
+      const boosted = forecast(ahead, ask.size, neededDay, `room:${share}`, share);
+      if (boosted.probabilityByDue < targetConfidence) continue;
+      options.push(
+        finish(
+          {
+            kind: 'make_room',
+            dueDate: ask.dueDate,
+            size: ask.size,
+            confidence: boosted.probabilityByDue,
+            confidenceByNeeded: boosted.probabilityByDue,
+            meetsNeededBy: true,
+            impacts: [],
+            askShare: { from: askShare, to: share, weeks: Math.max(1, Math.ceil((neededDay - today) / 7)) },
+          },
+          ask.dueDate,
+        ),
+      );
+      break;
+    }
+
     if (ask.size > 1) {
       for (let k = ask.size - 1; k >= 1; k--) {
         const part = forecast(ahead, k, neededDay, `split:${k}`);
@@ -179,5 +206,5 @@ export const negotiate = (input: NegotiationInput): Negotiation => {
             ? 'not_this_quarter'
             : 'later';
 
-  return { neededBy: ask.dueDate, options, recommended, verdict, curve: asAsked.curve, basis: asAsked.basis };
+  return { neededBy: ask.dueDate, options, recommended, verdict, curve: asAsked.curve, histogram: asAsked.histogram, inputs: asAsked.inputs, basis: asAsked.basis };
 };

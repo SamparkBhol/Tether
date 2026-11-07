@@ -163,17 +163,26 @@ export const savePolicy = async (p: TeamPolicy, by: string) => {
   return getPolicy(p.teamId);
 };
 
-export const saveSnapshot = (s: { commitmentId: string; takenOn: string; probability: number; p50: string; p85: string; basis: string }) =>
+export const saveSnapshot = (s: { commitmentId: string; takenOn: string; probability: number; p50: string; p85: string; basis: string; inputs?: unknown }) =>
   exec(
-    `INSERT INTO forecast_snapshots (commitment_id, taken_on, probability, p50, p85, basis) VALUES (?, ?, ?, ?, ?, ?)
-     ON DUPLICATE KEY UPDATE probability = VALUES(probability), p50 = VALUES(p50), p85 = VALUES(p85), basis = VALUES(basis)`,
+    `INSERT INTO forecast_snapshots (commitment_id, taken_on, probability, p50, p85, basis, inputs) VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE probability = VALUES(probability), p50 = VALUES(p50), p85 = VALUES(p85), basis = VALUES(basis), inputs = VALUES(inputs)`,
     s.commitmentId,
     s.takenOn,
     s.probability,
     s.p50,
     s.p85,
     s.basis,
+    s.inputs ? JSON.stringify(s.inputs) : null,
   );
+
+export const latestInputs = async <T>(commitmentId: string): Promise<T | null> => {
+  const r = await one<{ inputs: string | null }>(
+    'SELECT inputs FROM forecast_snapshots WHERE commitment_id = ? AND inputs IS NOT NULL ORDER BY taken_on DESC LIMIT 1',
+    commitmentId,
+  );
+  return r?.inputs ? parseJson<T | null>(r.inputs, null) : null;
+};
 
 export const snapshotsFor = (commitmentId: string) =>
   rows<{ taken_on: string; probability: number; p50: string; p85: string; basis: string }>(

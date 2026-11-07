@@ -6,12 +6,13 @@ import { asApp } from '../jira/client';
 import { getIssues } from '../jira/issues';
 import { log, nowIso, round, todayIso } from '../lib/util';
 import { getCommitment, openCommitments, setConfidence } from '../store/commitments';
-import { getTeam, saveSnapshot } from '../store/records';
+import { getTeam, latestInputs, saveSnapshot } from '../store/records';
 import { graphFor } from './asks';
 import { negotiateFor } from './forecasting';
 import { apply } from './lifecycle';
 import { loadModel, type TeamModelView } from './model';
-import { broadcast, day } from './notify';
+import { broadcast, day, tellEscalation } from './notify';
+import { causes, decide, inputsOf, type Inputs } from './diagnose';
 import type { Scope } from './scope';
 
 const SYSTEM = { side: 'system' as const, agent: 'tether' };
@@ -65,8 +66,15 @@ export const replanAll = async (s: Scope, reason: string) => {
   const byId = new Map(live.map((c) => [c.id, c]));
 
   let moved = 0;
+  const today = toDay(todayIso());
+  const ownerIssues = new Map(
+    (await getIssues(asApp, live.map((c) => c.ownerIssueKey).filter((k): k is string => !!k))).map((i) => [i.key, i]),
+  );
   for (const r of results.values()) {
     const c = byId.get(r.id)!;
+    const model = views.get(c.ownerTeamId);
+    const now = inputsOf(r.result);
+    const before = await latestInputs<Inputs>(c.id);
     await setConfidence(c.id, round(r.confidence, 4));
     await saveSnapshot({
       commitmentId: c.id,
@@ -74,7 +82,8 @@ export const replanAll = async (s: Scope, reason: string) => {
       probability: round(r.confidence, 4),
       p50: r.result.dates.p50,
       p85: r.result.dates.p85,
-      basis: views.get(c.ownerTeamId)?.basis ?? 'declared',
+      basis: model?.basis ?? 'declared',
+      inputs: now,
     });
     if (!r.move) {
       if (Math.abs((r.previous ?? r.confidence) - r.confidence) >= 0.05) await broadcast({ ...c, confidence: r.confidence }, 'forecast');
@@ -90,33 +99,32 @@ export const replanAll = async (s: Scope, reason: string) => {
         await apply(s, c.id, { kind: 'recover', confidence: r.confidence }, SYSTEM, `Back to ${pct(r.confidence)}`, QUIET);
         continue;
       }
-      await apply(s, c.id, { kind: 'slip', confidence: r.confidence }, SYSTEM, `Dropped to ${pct(r.confidence)}`, QUIET);
-      const model = views.get(c.ownerTeamId);
-      const fresh = await getCommitment(c.id);
-      if (!model || !fresh || fresh.state !== 'at_risk') continue;
-      const negotiation = await negotiateFor(toQueueItem(fresh), model, fresh.id);
-      const option = negotiation.recommended;
-      if (option.kind === 'as_asked') continue;
-      const causes = r.upstreamIds
+      if (!model) continue;
+      const owner = model.team;
+      const drag = r.upstreamIds
         .map((u) => byId.get(u))
-        .filter((u): u is Commitment => !!u && (results.get(u.id)?.confidence ?? 1) < (model.policy.riskThreshold + 0.05))
-        .map((u) => `Waiting on "${u.title}", which is now ${pct(results.get(u.id)!.confidence)} likely on time.`);
-      const why = [
-        ...causes,
-        ...(causes.length ? [] : [`Recent throughput and the queue ahead put this at ${pct(r.confidence)} for ${day(fresh.terms.dueDate)}.`]),
-      ];
-      await apply(
-        s,
-        fresh.id,
-        {
-          kind: 'renegotiate',
-          terms: { dueDate: option.dueDate, scope: fresh.terms.scope, size: option.size, confidence: round(option.confidence, 4) },
-          reason: why.join(' '),
-        },
-        SYSTEM,
-        undefined,
-        QUIET,
-      );
+        .filter((u): u is Commitment => !!u && (results.get(u.id)?.confidence ?? 1) < model.policy.riskThreshold + 0.05)
+        .map((u) => ({ title: u.title, confidence: results.get(u.id)!.confidence }));
+      const ownerIssue = c.ownerIssueKey ? ownerIssues.get(c.ownerIssueKey) ?? null : null;
+      const why = causes({ ...c, confidence: r.confidence }, owner, now, before, drag, ownerIssue, today);
+      await apply(s, c.id, { kind: 'slip', confidence: r.confidence }, SYSTEM, why.join(' '), QUIET);
+      const fresh = await getCommitment(c.id);
+      if (!fresh || fresh.state !== 'at_risk') continue;
+      const decision = decide(fresh, await negotiateFor(toQueueItem(fresh), model, fresh.id));
+      if (decision.kind === 'propose') {
+        const o = decision.option;
+        await apply(
+          s,
+          fresh.id,
+          { kind: 'renegotiate', terms: { dueDate: o.dueDate, scope: fresh.terms.scope, size: o.size, confidence: round(o.confidence, 4) }, reason: why.join(' ') },
+          SYSTEM,
+          undefined,
+          QUIET,
+        );
+      } else if (decision.kind === 'escalate') {
+        const requester = await getTeam(fresh.requesterTeamId);
+        await tellEscalation(asApp, fresh, owner, requester?.name ?? 'the asking team', why, decision);
+      }
     } catch (e) {
       log('replan.move_failed', { id: c.id, move: r.move, message: (e as Error).message });
     }

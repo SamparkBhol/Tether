@@ -69,6 +69,8 @@ export const optionTitle = (o: Option, neededBy: string) => {
       return `On time by going first`;
     case 'split_scope':
       return `First ${o.size} item${o.size === 1 ? '' : 's'} on time`;
+    case 'make_room':
+      return `On time if they make room`;
   }
 };
 
@@ -87,7 +89,9 @@ export const optionDetail = (o: Option, teamName: (id: string) => string) => {
   }
   if (o.kind === 'split_scope' && o.remainder)
     return `The other ${o.remainder.size} follow by ${dayLabel(o.remainder.dueDate)}.`;
-  if (o.kind === 'later_date') return 'Same scope, a date the team can hit.';
+  if (o.kind === 'make_room' && o.askShare)
+    return `Means giving about ${Math.round(o.askShare.to * 100)}% of their time to asks for ${o.askShare.weeks} week${o.askShare.weeks === 1 ? '' : 's'}, up from ${Math.round(o.askShare.from * 100)}%. Their call.`;
+  if (o.kind === 'later_date') return 'Same scope, a date the team can hit as things stand.';
   return '';
 };
 

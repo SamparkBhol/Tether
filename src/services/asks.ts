@@ -29,6 +29,7 @@ export interface AskInput {
   size?: number;
   channel?: Channel;
   agentClient?: string;
+  useExisting?: string | null;
 }
 
 export interface Draft {
@@ -46,6 +47,7 @@ export interface Draft {
   model: { basis: TeamModelView['basis']; windowEnd?: string; perWeek: number; askShare: number };
   duplicateOf?: Commitment;
   cycle: boolean;
+  existingWork: { key: string; summary: string }[];
 }
 
 const cleanTitle = (s: string) => s.replace(/\s+/g, ' ').trim().slice(0, 200);
@@ -93,6 +95,11 @@ export const draftAsk = async (s: Scope, input: AskInput): Promise<Draft> => {
       lineage.has(c.ownerIssueKey),
   );
 
+  const claimed = new Set(open.map((c) => c.ownerIssueKey).filter(Boolean));
+  const existingWork = source.blockedBy
+    .filter((b) => owner.spaceKeys.includes(b.projectKey) && b.statusCategory !== 'done' && !claimed.has(b.key))
+    .map(({ key, summary }) => ({ key, summary }));
+
   return {
     source,
     requester,
@@ -108,6 +115,7 @@ export const draftAsk = async (s: Scope, input: AskInput): Promise<Draft> => {
     model: { basis: model.basis, windowEnd: model.windowEnd, perWeek: model.summary.perWeek, askShare: model.policy.askShare },
     duplicateOf,
     cycle,
+    existingWork,
   };
 };
 
@@ -142,6 +150,7 @@ export const raiseAsk = async (s: Scope, input: AskInput): Promise<{ commitment:
     requesterTeamId: d.requester.id,
     ownerTeamId: d.owner.id,
     sourceIssueKey: d.source.key,
+    ownerIssueKey: input.useExisting && d.existingWork.some((w) => w.key === input.useExisting) ? input.useExisting : undefined,
     title: d.title,
     state: 'proposed',
     neededBy: d.neededBy,

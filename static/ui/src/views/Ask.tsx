@@ -3,7 +3,7 @@ import { showFlag, view } from '@forge/bridge';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { call } from '../api';
 import { Problem, Team } from '../components/bits';
-import { Curve } from '../components/Curve';
+import { Forecast } from '../components/Forecast';
 import { Options, verdictLine } from '../components/Options';
 import { addDays, dayLabel, today } from '../format';
 import type { Bootstrap, Negotiation, Option, TeamLite } from '../types';
@@ -20,6 +20,7 @@ interface Draft {
   model: { basis: string; windowEnd?: string; perWeek: number; askShare: number };
   duplicateOf: { id: string; state: string } | null;
   cycle: boolean;
+  existingWork: { key: string; summary: string }[];
 }
 
 const paceLine = (d: Draft) => {
@@ -42,6 +43,7 @@ export const Ask = ({ boot, issueKey, inModal }: { boot: Bootstrap; issueKey: st
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [picked, setPicked] = useState<Option | null>(null);
+  const [reuse, setReuse] = useState<string | null>(null);
   const run = useRef(0);
 
   const names = useMemo(() => new Map(boot.teams.map((t) => [t.id, t.name])), [boot.teams]);
@@ -63,6 +65,7 @@ export const Ask = ({ boot, issueKey, inModal }: { boot: Bootstrap; issueKey: st
         setDraft(d);
         setError(null);
         if (!title) setTitle(d.title);
+        setReuse((r) => (r && d.existingWork.some((w) => w.key === r) ? r : (d.existingWork[0]?.key ?? null)));
       } catch (e) {
         if (id === run.current) setError((e as Error).message);
       } finally {
@@ -89,6 +92,7 @@ export const Ask = ({ boot, issueKey, inModal }: { boot: Bootstrap; issueKey: st
         size,
         title,
         detail,
+        useExisting: reuse,
       });
       showFlag({
         id: r.id,
@@ -179,14 +183,27 @@ export const Ask = ({ boot, issueKey, inModal }: { boot: Bootstrap; issueKey: st
         {draft && (
           <div className={drafting ? 'stale' : ''}>
             <p className="verdict">{verdictLine(draft.negotiation, draft.owner.name)}</p>
-            <Curve
-              points={draft.negotiation.curve}
+            <Forecast
+              curve={draft.negotiation.curve}
+              histogram={draft.negotiation.histogram}
+              inputs={draft.negotiation.inputs}
+              team={draft.owner.name}
+              windowEnd={draft.model.windowEnd}
               neededBy={neededBy}
-              due={draft.negotiation.recommended.dueDate}
               neededConfidence={draft.negotiation.options[0]?.confidence}
-              dueConfidence={draft.negotiation.recommended.confidence}
+              proposal={draft.negotiation.recommended.kind === 'as_asked' ? undefined : draft.negotiation.recommended.dueDate}
+              proposalConfidence={draft.negotiation.recommended.confidence}
+              proposalLabel={draft.negotiation.recommended.kind === 'later_date' ? 'Safe date' : undefined}
             />
-            <p className="muted small">{paceLine(draft)}</p>
+            {draft.model.basis === 'declared' && <p className="muted small">{paceLine(draft)}</p>}
+            {draft.existingWork.length > 0 && (
+              <label className="reuse">
+                <input type="checkbox" checked={!!reuse} onChange={(e) => setReuse(e.target.checked ? draft.existingWork[0].key : null)} />
+                <span>
+                  {draft.existingWork[0].key} "{draft.existingWork[0].summary}" already blocks this. Track the ask on it instead of creating a new work item.
+                </span>
+              </label>
+            )}
             {draft.goals.length > 0 && (
               <p className="small">
                 Serves {draft.goals.map((g) => g.name.replace(/[.\s]+$/, '')).join(', ')}. Asks tied to company goals go ahead of the rest.

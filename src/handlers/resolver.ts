@@ -71,6 +71,7 @@ def('draft', async (r) => {
     model: d.model,
     duplicateOf: d.duplicateOf ?? null,
     cycle: d.cycle,
+    existingWork: d.existingWork,
   };
 });
 

@@ -56,7 +56,7 @@ export interface Impact {
 }
 
 export interface Option {
-  kind: 'as_asked' | 'later_date' | 'jump_queue' | 'split_scope';
+  kind: 'as_asked' | 'later_date' | 'jump_queue' | 'split_scope' | 'make_room';
   dueDate: string;
   size: number;
   confidence: number;
@@ -64,6 +64,7 @@ export interface Option {
   meetsNeededBy: boolean;
   impacts: Impact[];
   remainder?: { size: number; dueDate: string; confidence: number };
+  askShare?: { from: number; to: number; weeks: number };
   score: number;
 }
 
@@ -73,6 +74,8 @@ export interface Negotiation {
   recommended: Option;
   verdict: 'easy' | 'tight' | 'needs_tradeoff' | 'later' | 'not_this_quarter';
   curve: CurvePoint[];
+  histogram: { date: string; share: number }[];
+  inputs: { perDay: number; askShare: number; itemsAhead: number; size: number; basis: 'history' | 'declared'; days: number };
   basis: 'history' | 'declared';
 }
 
