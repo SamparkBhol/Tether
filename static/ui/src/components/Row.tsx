@@ -19,6 +19,7 @@ export const Row = ({ card, perspective, teamName, onChanged, open = false, link
   const other = perspective === 'owner' ? card.requester : card.owner;
   const proposing = !!card.pendingTerms && (card.state === 'renegotiating' || card.state === 'countered');
   const due = proposing ? card.pendingTerms!.dueDate : card.terms.dueDate;
+  const closed = ['withdrawn', 'declined', 'delivered', 'broken'].includes(card.state);
   const odds = proposing && card.pendingTerms!.confidence !== undefined ? card.pendingTerms!.confidence : card.confidence;
   return (
     <li className={`row row-${card.state}`} style={{ ['--stripe' as string]: livery(other?.id) }}>
@@ -47,7 +48,7 @@ export const Row = ({ card, perspective, teamName, onChanged, open = false, link
                 {gapText(card.delta)}
               </span>
             )}
-            <Odds p={odds} />
+            {!closed && <Odds p={odds} />}
           </span>
         </span>
       </button>
