@@ -1,5 +1,5 @@
 import Resolver from '@forge/resolver';
-import type { Action } from '../domain/commitment';
+import { isOpen, isPending, type Action } from '../domain/commitment';
 import { invalid } from '../domain/errors';
 import type { Side, TeamPolicy } from '../domain/types';
 import { draftAsk, raiseAsk } from '../services/asks';
@@ -40,7 +40,7 @@ def('bootstrap', async (r) => {
   const teams = await syncTeams(s, !!r.payload.refresh);
   const project = contextProject(r);
   const here = project ? teams.find((t) => t.spaceKeys.includes(project)) : undefined;
-  const involved = new Set((await recent(200)).flatMap((c) => [c.ownerTeamId, c.requesterTeamId]));
+  const involved = new Set((await recent(200)).filter((c) => isOpen(c.state) || isPending(c.state)).flatMap((c) => [c.ownerTeamId, c.requesterTeamId]));
   return {
     accountId: s.accountId,
     teams: teams
