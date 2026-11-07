@@ -30,7 +30,7 @@ Tether gives every team on Jira Cloud the same thing, and adds the part that was
 
 ## Who can answer for a team
 
-Only people who can create and edit work in a team's Jira space, or who are members of that team in Atlassian, can accept, counter or decline on its behalf. Tether checks this on every action, not just in the UI. When an ask arrives, the space lead and the team's members get a normal Jira email, and if nobody answers within two working days they get one reminder.
+Only people who can create and edit work in a team's Jira space, or who are members of that team in Atlassian, can accept, counter or decline on its behalf. Once you tell Tether which teams you're on, you answer only for those, so an admin or anyone on a site with open spaces doesn't end up speaking for every team. Tether checks this on every action, from the app, a Rovo agent or an MCP client, not just in the UI. When an ask arrives, the space lead and the team's members get a normal Jira email, and if nobody answers within two working days they get one reminder.
 
 ## The forecast
 
