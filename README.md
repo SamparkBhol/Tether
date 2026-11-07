@@ -1,0 +1,64 @@
+# Tether
+
+Tether turns "can your team do this for us?" into a date both teams agree on, and keeps that date honest while the work moves.
+
+It lives inside Jira, Confluence and Rovo. There is no new tool to learn and no new board to keep up to date.
+
+## Why
+
+Most launches don't slip because one team is slow. They slip because one team needed a review, an API or a sign-off from another team, asked for it in a chat thread, got a "sure, should be fine" and planned around it. Weeks later the date quietly moves and nobody downstream finds out until it is too late.
+
+Big companies solve this with dependency contracts in tools like Jira Align. Everyone else has a spreadsheet, a standup and hope.
+
+Tether gives every team on Jira Cloud the same thing, and adds the part that was always missing, a forecast both sides can trust.
+
+## How it works
+
+**Ask.** From any work item, ask another team for what you need and when you need it. Tether finds the team that owns it and the company goals the work is tied to.
+
+**Offer.** The other team sees the ask in their desk with a forecast built from how fast they actually finish work. If your date is unlikely, Tether shows what would actually make it work. That might be a later date, a smaller first slice, going ahead of lower priority work (and it tells you whose promise that pushes back), or the team making room for a couple of weeks.
+
+**Commit.** When they accept, Tether creates the work item in their space, links it to yours and records what was agreed, with the odds at the time.
+
+**Keep.** Every change on either side re-runs the forecast. When a promise drops below the team's threshold, Tether works out why (a slower week, more work landing ahead of it, an upstream team running late) and either proposes new terms or, when the only realistic date is far away, puts the options in front of the owning team instead of guessing.
+
+**Deliver.** When the work is done, the promise closes and the team's track record updates, so the next forecast gets a little more honest.
+
+## The forecast
+
+Tether doesn't ask anyone for estimates. It replays the owning team's real day to day output thousands of times, using the share of their time that usually goes to other teams' asks and whatever is already queued ahead. The chart shows which week each replay finished in and adds them up into the chance of being done by each date. Hover it, or use the arrow keys, to read any day.
+
+When a team has no recent history in Jira, Tether says so and uses the capacity the team set instead. It never pretends.
+
+## Rovo, MCP and the Teamwork Graph
+
+- **Tether** is a Rovo agent for the asking side. **Tether Desk** helps the owning team answer. Both work through the same actions, and three skills (`raise-ask`, `negotiate-commitment`, `replan-slip`) that any Rovo Studio agent can reuse.
+- The same actions are exposed over `rovo:mcp`, so a coding agent in your editor can check what your team is waiting on or raise an ask while you plan a change.
+- Tether reads the Teamwork Graph for the teams that own each space, the goals a work item serves and the deployments linked to it.
+
+## Install
+
+You need a Jira Cloud site with Rovo. Confluence is optional and adds the launch readiness macro.
+
+1. Open the installation link and install into Jira, then Confluence if you use it.
+2. An org admin approves the Teamwork Graph scopes during install.
+3. Open **Apps > Tether** and pick your team.
+
+## Develop
+
+```bash
+npm install
+npm --prefix static/ui install
+npm run deploy
+forge install --site <your-site>.atlassian.net --product jira
+```
+
+The backend lives in `src` and is grouped by what it does. `domain` holds the commitment state machine, `engine` does forecasting, negotiation and propagation, `services` has the use cases, `store` talks to Forge SQL, and `jira` and `graph` wrap the APIs. The UI is a single Custom UI app in `static/ui` that renders every module.
+
+## Privacy
+
+Tether runs on Atlassian. It stores asks, commitments and forecast snapshots in Forge SQL inside your site, and sends nothing anywhere else.
+
+## License
+
+MIT
