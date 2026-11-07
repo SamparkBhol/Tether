@@ -38,6 +38,7 @@ export const Ask = ({ boot, issueKey, inModal }: { boot: Bootstrap; issueKey: st
   const [detail, setDetail] = useState('');
   const [neededBy, setNeededBy] = useState(addDays(today(), 14));
   const [size, setSize] = useState(1);
+  const [sizeText, setSizeText] = useState('1');
   const [draft, setDraft] = useState<Draft | null>(null);
   const [drafting, setDrafting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +82,7 @@ export const Ask = ({ boot, issueKey, inModal }: { boot: Bootstrap; issueKey: st
   const choose = (o: Option) => {
     setPicked(o);
     if (o.kind === 'later_date') setNeededBy(o.dueDate);
-    if (o.kind === 'split_scope') setSize(o.size);
+    if (o.kind === 'split_scope') (setSize(o.size), setSizeText(String(o.size)));
   };
 
   const send = async () => {
@@ -160,7 +161,19 @@ export const Ask = ({ boot, issueKey, inModal }: { boot: Bootstrap; issueKey: st
           </div>
           <div className="field">
             <label htmlFor="size">Separate pieces of work</label>
-            <input id="size" type="number" min={1} max={20} value={size} onChange={(e) => (setSize(Math.max(1, Number(e.target.value) || 1)), setPicked(null))} />
+            <input
+              id="size"
+              type="number"
+              min={1}
+              max={20}
+              value={sizeText}
+              onChange={(e) => {
+                setSizeText(e.target.value);
+                const n = Math.round(Number(e.target.value));
+                if (n >= 1) (setSize(Math.min(20, n)), setPicked(null));
+              }}
+              onBlur={() => setSizeText(String(size))}
+            />
           </div>
         </div>
         <div className="field">
