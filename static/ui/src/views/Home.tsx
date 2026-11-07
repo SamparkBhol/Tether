@@ -4,7 +4,7 @@ import { call, useCall, useChanges } from '../api';
 import { Empty, Loading, Problem, Team } from '../components/bits';
 import { RemoveSample, SampleButton, SampleCard } from '../components/Sample';
 import { Tower } from '../components/Tower';
-import { livery } from '../livery';
+import { livery, registerTeams } from '../livery';
 import type { Bootstrap, Card, TeamLite } from '../types';
 import { Desk } from './Desk';
 
@@ -32,6 +32,7 @@ export const Home = ({ boot, refreshBoot }: { boot: Bootstrap; refreshBoot: () =
   const live = (ledger.data?.commitments ?? []).filter((c) => LIVE.has(c.state));
   const done = (ledger.data?.commitments ?? []).filter((c) => !LIVE.has(c.state));
   const involved = (ledger.data?.nodes ?? []).filter((t): t is TeamLite => !!t);
+  useMemo(() => registerTeams([...involved.map((t) => t.id), ...boot.teams.map((t) => t.id)]), [ledger.data, boot.teams]);
 
   return (
     <div className="home">
