@@ -147,8 +147,9 @@ export const Home = ({ boot, refreshBoot }: { boot: Bootstrap; refreshBoot: () =
   );
 };
 
-const TeamChooser = ({ teams, onPick }: { teams: TeamLite[]; onPick: (id: string) => void }) => {
+const TeamChooser = ({ teams, onPick }: { teams: TeamLite[]; onPick: (id: string) => Promise<void> }) => {
   const [q, setQ] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const term = q.trim().toLowerCase();
   const shown = teams.filter((t) => !term || t.name.toLowerCase().includes(term) || t.spaceKeys.some((k) => k.toLowerCase() === term));
   return (
@@ -156,10 +157,11 @@ const TeamChooser = ({ teams, onPick }: { teams: TeamLite[]; onPick: (id: string
       <h2 className="chooser-title">Which team are you on?</h2>
       <p className="muted">Pick your team so Tether can show the asks waiting for you and the promises you've made.</p>
       <input className="chooser-search" autoFocus placeholder="Find your team" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Find your team" />
+      {error && <p className="chooser-error" role="alert">{error}</p>}
       <ul className="chooser-grid">
         {shown.slice(0, 24).map((t) => (
           <li key={t.id}>
-            <button onClick={() => onPick(t.id)}>
+            <button onClick={() => (setError(null), onPick(t.id).catch((e) => setError((e as Error).message)))}>
               <Team team={t} size="medium" />
               <span className="muted small">{t.spaceKeys.join(', ')}</span>
             </button>
