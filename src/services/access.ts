@@ -1,6 +1,8 @@
+import { kvs } from '@forge/kvs';
 import type { Team } from '../domain/types';
 import { teamsOfUser } from '../graph/context';
 import { jiraMaybe, route } from '../jira/client';
+import { kvKey } from '../lib/util';
 import { getTeam } from '../store/records';
 import { graphScope, type Scope } from './scope';
 
@@ -11,6 +13,7 @@ interface Permissions {
 export class Access {
   private graph: Promise<Set<string>> | null = null;
   private spaces = new Map<string, Promise<boolean>>();
+  private pinned: Promise<string[]> | null = null;
 
   constructor(private readonly s: Scope) {}
 
@@ -20,6 +23,12 @@ export class Access {
         ? teamsOfUser(graphScope(this.s), this.s.accountId).then((ts) => new Set(ts.map((t) => t.id)))
         : Promise.resolve(new Set<string>());
     return this.graph;
+  }
+
+  private pins() {
+    if (!this.pinned)
+      this.pinned = this.s.accountId ? kvs.get<string[]>(kvKey('my-teams', this.s.accountId)).then((v) => v ?? []) : Promise.resolve([]);
+    return this.pinned;
   }
 
   private canWork(projectKey: string) {
@@ -33,9 +42,16 @@ export class Access {
     return p;
   }
 
-  async canActFor(team: Team | undefined | null): Promise<boolean> {
+  async canActFor(team: Team | undefined | null, joining = false): Promise<boolean> {
     if (!team || this.s.system) return !!team;
-    if ((await this.graphTeams()).has(team.id)) return true;
+    const graph = await this.graphTeams();
+    if (graph.has(team.id)) return true;
+    const pins = await this.pins();
+    if (!joining && (graph.size || pins.length)) return pins.includes(team.id) && (await this.canWorkIn(team));
+    return this.canWorkIn(team);
+  }
+
+  private async canWorkIn(team: Team) {
     const key = team.spaceKeys[0];
     return key ? this.canWork(key) : false;
   }
