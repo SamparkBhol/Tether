@@ -1470,3 +1470,59 @@ textarea {
   font-size: 12px;
   font-weight: 600;
 }
+
+.chooser {
+  max-width: 880px;
+  padding: var(--ds-space-200, 16px) 0;
+}
+
+.chooser-title {
+  margin: 0 0 var(--ds-space-050, 4px);
+  font: var(--ds-font-heading-medium, 653 20px/24px ui-sans-serif, system-ui, sans-serif);
+}
+
+.chooser-search {
+  width: 100%;
+  max-width: 420px;
+  margin: var(--ds-space-200, 16px) 0 var(--ds-space-150, 12px);
+  padding: var(--ds-space-100, 8px) var(--ds-space-150, 12px);
+  border: 1px solid var(--ds-border-input, #8590a2);
+  border-radius: var(--t-radius);
+  background: var(--ds-background-input, #fff);
+  color: var(--ds-text, #172b4d);
+  font: inherit;
+}
+
+.chooser-search:focus {
+  outline: 2px solid var(--ds-border-focused, #388bff);
+  outline-offset: 1px;
+}
+
+.chooser-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--ds-space-100, 8px);
+}
+
+.chooser-grid button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--ds-space-100, 8px);
+  width: 100%;
+  padding: var(--ds-space-100, 8px) var(--ds-space-150, 12px);
+  border: 1px solid var(--t-border);
+  border-radius: var(--t-radius);
+  background: var(--ds-surface, #fff);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chooser-grid button:hover {
+  background: var(--t-hover);
+  border-color: var(--ds-border-bold, #758195);
+}

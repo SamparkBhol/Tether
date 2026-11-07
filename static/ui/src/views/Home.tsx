@@ -1,7 +1,7 @@
 import Button from '@atlaskit/button/new';
 import { useMemo, useState } from 'react';
 import { call, useCall, useChanges } from '../api';
-import { Empty, Loading, Problem } from '../components/bits';
+import { Empty, Loading, Problem, Team } from '../components/bits';
 import { RemoveSample, SampleButton, SampleCard } from '../components/Sample';
 import { Tower } from '../components/Tower';
 import { livery } from '../livery';
@@ -80,24 +80,14 @@ export const Home = ({ boot, refreshBoot }: { boot: Bootstrap; refreshBoot: () =
             <Desk boot={boot} teamId={team} onPinned={refreshBoot} />
           </>
         ) : (
-          <Empty title="Which team are you on?">
-            <p>Pick your team so Tether can show the asks waiting for you and the promises you've made.</p>
-            <ul className="team-choose">
-              {boot.teams.slice(0, 30).map((t) => (
-                <li key={t.id}>
-                  <button
-                    onClick={async () => {
-                      await call('pin', { teamId: t.id, on: true });
-                      setTeam(t.id);
-                      refreshBoot();
-                    }}
-                  >
-                    {t.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </Empty>
+          <TeamChooser
+            teams={boot.teams}
+            onPick={async (id) => {
+              await call('pin', { teamId: id, on: true });
+              setTeam(id);
+              refreshBoot();
+            }}
+          />
         ))}
 
       {tab === 'all' &&
@@ -152,6 +142,30 @@ export const Home = ({ boot, refreshBoot }: { boot: Bootstrap; refreshBoot: () =
             </p>
           </>
         ) : null)}
+    </div>
+  );
+};
+
+const TeamChooser = ({ teams, onPick }: { teams: TeamLite[]; onPick: (id: string) => void }) => {
+  const [q, setQ] = useState('');
+  const term = q.trim().toLowerCase();
+  const shown = teams.filter((t) => !term || t.name.toLowerCase().includes(term) || t.spaceKeys.some((k) => k.toLowerCase() === term));
+  return (
+    <div className="chooser">
+      <h2 className="chooser-title">Which team are you on?</h2>
+      <p className="muted">Pick your team so Tether can show the asks waiting for you and the promises you've made.</p>
+      <input className="chooser-search" autoFocus placeholder="Find your team" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Find your team" />
+      <ul className="chooser-grid">
+        {shown.slice(0, 24).map((t) => (
+          <li key={t.id}>
+            <button onClick={() => onPick(t.id)}>
+              <Team team={t} size="medium" />
+              <span className="muted small">{t.spaceKeys.join(', ')}</span>
+            </button>
+          </li>
+        ))}
+        {!shown.length && <li className="muted">No team matches "{q.trim()}".</li>}
+      </ul>
     </div>
   );
 };
