@@ -1,0 +1,407 @@
+modules:
+  jira:globalPage:
+    - key: tether-home
+      title: Tether
+      icon: resource:ui;tether.svg
+      resource: ui
+      resolver:
+        function: resolver
+  jira:projectPage:
+    - key: tether-desk
+      title: Tether desk
+      icon: resource:ui;tether.svg
+      resource: ui
+      resolver:
+        function: resolver
+  jira:issuePanel:
+    - key: tether-panel
+      title: Tether
+      icon: resource:ui;tether.svg
+      resource: ui
+      resolver:
+        function: resolver
+  jira:issueAction:
+    - key: tether-ask
+      title: Ask another team
+      resource: ui
+      resolver:
+        function: resolver
+
+  rovo:agent:
+    - key: tether-agent
+      name: Tether
+      description: Get a date you can plan around from another team. Tether drafts the ask, forecasts it against the other team's real pace and shows the trade-offs before anything is sent.
+      icon: resource:ui;tether.svg
+      prompt: resource:prompts;tether.txt
+      conversationStarters:
+        - I need Legal to review our pricing terms before launch
+        - What are we waiting on from other teams?
+        - What breaks if the Platform work slips a week?
+      skills:
+        - raise-ask
+        - replan-slip
+      actions:
+        - commitment-status
+    - key: tether-desk-agent
+      name: Tether Desk
+      description: Answer asks from other teams without overpromising. Recommends accept, counter or decline with the cost to your existing promises spelled out.
+      icon: resource:ui;tether.svg
+      prompt: resource:prompts;desk.txt
+      conversationStarters:
+        - What is waiting for my team's answer?
+        - Which of our promises are slipping?
+        - Draft a counter for the newest ask
+      skills:
+        - negotiate-commitment
+        - replan-slip
+
+  rovo:skill:
+    - key: raise-ask
+      source:
+        dir: rovo/skills/raise-ask
+      dependencies:
+        tools:
+          - find-team
+          - draft-ask
+          - raise-ask
+          - my-commitments
+    - key: negotiate-commitment
+      source:
+        dir: rovo/skills/negotiate-commitment
+      dependencies:
+        tools:
+          - team-desk
+          - commitment-status
+          - propose-terms
+          - accept-commitment
+          - decline-ask
+    - key: replan-slip
+      source:
+        dir: rovo/skills/replan-slip
+      dependencies:
+        tools:
+          - my-commitments
+          - commitment-status
+          - slip-impact
+          - propose-terms
+          - accept-commitment
+
+  rovo:mcp:
+    - key: tether-mcp
+      name: Tether
+      tools:
+        - find-team
+        - draft-ask
+        - raise-ask
+        - team-desk
+        - commitment-status
+        - propose-terms
+        - accept-commitment
+        - decline-ask
+        - slip-impact
+        - my-commitments
+
+  action:
+    - key: find-team
+      name: Find a team
+      function: a-find-team
+      actionVerb: GET
+      description: Finds teams by name or by the Jira space they own. With no query, returns the teams the current user belongs to.
+      inputs:
+        query:
+          title: Team name or space
+          type: string
+          required: false
+          description: Part of a team name or a space key, for example Legal or PLAT.
+    - key: draft-ask
+      name: Draft an ask
+      function: a-draft
+      actionVerb: GET
+      description: Read-only preview of an ask to another team. Returns the owning team, the goals the work serves, the team's pace and a forecast with options such as a later date, a smaller first slice or moving ahead of lower-priority work. Changes nothing.
+      inputs:
+        issueKey:
+          title: Work item key
+          type: string
+          required: false
+          description: The work item that needs the other team, for example MC-12. Omit when called from a work item.
+        team:
+          title: Owning team
+          type: string
+          required: true
+          description: Team name, space key or team id of the team that owns the work.
+        neededBy:
+          title: Needed by
+          type: string
+          required: true
+          description: Calendar date in YYYY-MM-DD format.
+        title:
+          title: Title
+          type: string
+          required: false
+          description: Short title for the ask, written so the other team understands it on its own.
+        detail:
+          title: Detail
+          type: string
+          required: false
+          description: What is needed and why, including acceptance criteria.
+        items:
+          title: Items
+          type: integer
+          required: false
+          description: How many separate pieces of work the ask needs. Defaults to 1.
+        client:
+          title: Client
+          type: string
+          required: false
+          description: Name of the AI client making the call when used over MCP, for example Cursor.
+    - key: raise-ask
+      name: Raise an ask
+      function: a-raise
+      actionVerb: CREATE
+      description: Sends an ask to another team and records it as a proposed commitment with its forecast. Only call after the user confirms the team, title, date and items.
+      inputs:
+        issueKey:
+          title: Work item key
+          type: string
+          required: false
+          description: The work item that needs the other team. Omit when called from a work item.
+        team:
+          title: Owning team
+          type: string
+          required: true
+          description: Team name, space key or team id.
+        neededBy:
+          title: Needed by
+          type: string
+          required: true
+          description: Calendar date in YYYY-MM-DD format.
+        title:
+          title: Title
+          type: string
+          required: true
+          description: Short title for the ask.
+        detail:
+          title: Detail
+          type: string
+          required: false
+          description: What is needed and why.
+        items:
+          title: Items
+          type: integer
+          required: false
+          description: Number of separate pieces of work. Defaults to 1.
+        client:
+          title: Client
+          type: string
+          required: false
+          description: Name of the AI client making the call when used over MCP.
+    - key: team-desk
+      name: Team desk
+      function: a-desk
+      actionVerb: GET
+      description: Shows a team's incoming asks waiting for an answer with options for each, its current promises with confidence, its pace and how accurate its past forecasts were.
+      inputs:
+        team:
+          title: Team
+          type: string
+          required: false
+          description: Team name or space key. Defaults to the user's own team.
+    - key: commitment-status
+      name: Commitment status
+      function: a-status
+      actionVerb: GET
+      description: Status of one commitment by id, or of everything a work item waits on and promises to others by work item key, with forecasts and history.
+      inputs:
+        commitmentId:
+          title: Commitment id
+          type: string
+          required: false
+          description: Id returned by other Tether tools.
+        issueKey:
+          title: Work item key
+          type: string
+          required: false
+          description: Work item key. Omit when called from a work item.
+    - key: propose-terms
+      name: Propose terms
+      function: a-propose
+      actionVerb: UPDATE
+      description: Proposes a new date or a smaller first slice for a commitment. Counters a new ask, re-proposes after a counter, or opens a renegotiation. Only call after the user confirms.
+      inputs:
+        commitmentId:
+          title: Commitment id
+          type: string
+          required: true
+          description: The commitment to change.
+        dueDate:
+          title: Due date
+          type: string
+          required: true
+          description: Proposed date in YYYY-MM-DD format.
+        items:
+          title: Items
+          type: integer
+          required: false
+          description: Number of items in the proposal. Lower than the original means a first slice.
+        reason:
+          title: Reason
+          type: string
+          required: false
+          description: Plain-language reason the other team will read.
+    - key: accept-commitment
+      name: Accept a commitment
+      function: a-accept
+      actionVerb: UPDATE
+      description: Accepts an ask, a counter-offer or renegotiated terms. On first acceptance it creates the linked work item in the owning team's space. Only call after the user confirms.
+      inputs:
+        commitmentId:
+          title: Commitment id
+          type: string
+          required: true
+          description: The commitment to accept.
+    - key: decline-ask
+      name: Decline an ask
+      function: a-decline
+      actionVerb: UPDATE
+      description: Declines an ask with a reason the asking team can plan around. Only call after the user confirms.
+      inputs:
+        commitmentId:
+          title: Commitment id
+          type: string
+          required: true
+          description: The ask to decline.
+        reason:
+          title: Reason
+          type: string
+          required: true
+          description: Why this cannot be done, and what would help.
+    - key: slip-impact
+      name: Slip impact
+      function: a-what-if
+      actionVerb: GET
+      description: Read-only what-if. Shows every downstream commitment that would move if this one landed on a new date, with confidence before and after. Changes nothing.
+      inputs:
+        commitmentId:
+          title: Commitment id
+          type: string
+          required: true
+          description: The commitment that might slip.
+        newDate:
+          title: New date
+          type: string
+          required: true
+          description: The date to test in YYYY-MM-DD format.
+    - key: my-commitments
+      name: My commitments
+      function: a-mine
+      actionVerb: GET
+      description: Everything the user's teams owe other teams and are waiting on from them, or everything touching one work item.
+      inputs:
+        issueKey:
+          title: Work item key
+          type: string
+          required: false
+          description: Limit to one work item. Omit for everything.
+
+  trigger:
+    - key: issue-events
+      function: on-issue
+      events:
+        - avi:jira:updated:issue
+        - avi:jira:deleted:issue
+        - avi:jira:created:issuelink
+        - avi:jira:deleted:issuelink
+      filter:
+        ignoreSelf: true
+    - key: lifecycle
+      function: on-lifecycle
+      events:
+        - avi:forge:installed:app
+        - avi:forge:upgraded:app
+
+  consumer:
+    - key: work-consumer
+      queue: tether-work
+      function: consume
+
+  scheduledTrigger:
+    - key: nightly
+      function: nightly
+      interval: day
+
+  sql:
+    - key: main
+      engine: mysql
+
+  function:
+    - key: resolver
+      handler: index.resolver
+    - key: on-issue
+      handler: index.onIssue
+    - key: on-lifecycle
+      handler: index.onLifecycle
+    - key: consume
+      handler: index.consume
+      timeoutSeconds: 900
+    - key: nightly
+      handler: index.nightly
+    - key: a-find-team
+      handler: index.findTeam
+    - key: a-draft
+      handler: index.draft
+    - key: a-raise
+      handler: index.raise
+    - key: a-desk
+      handler: index.desk
+    - key: a-status
+      handler: index.status
+    - key: a-propose
+      handler: index.propose
+    - key: a-accept
+      handler: index.accept
+    - key: a-decline
+      handler: index.decline
+    - key: a-what-if
+      handler: index.whatIf
+    - key: a-mine
+      handler: index.mine
+
+resources:
+  - key: ui
+    path: static/ui/dist
+  - key: prompts
+    path: rovo/prompts
+
+permissions:
+  scopes:
+    read:jira-work:
+      allowImpersonation: true
+    write:jira-work:
+      allowImpersonation: true
+    read:jira-user: {}
+    storage:app: {}
+    read:graph:issue:jira:
+      allowImpersonation: true
+    read:graph:project:jira:
+      allowImpersonation: true
+    read:graph:team:atlassian:
+      allowImpersonation: true
+    read:graph:user:atlassian:
+      allowImpersonation: true
+    read:graph:goal:atlassian:
+      allowImpersonation: true
+    read:graph:goal-update:atlassian:
+      allowImpersonation: true
+    read:graph:deployment:external:
+      allowImpersonation: true
+    read:graph:pull-request:external:
+      allowImpersonation: true
+  content:
+    styles:
+      - unsafe-inline
+
+app:
+  runtime:
+    name: nodejs22.x
+    memoryMB: 512
+    architecture: arm64
