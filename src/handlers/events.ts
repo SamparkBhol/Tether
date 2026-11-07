@@ -48,7 +48,7 @@ export const consume = async (event: AsyncEvent, context: Record<string, any>) =
       await migrate();
       return;
     case 'sync':
-      await syncTeams(s, true);
+      await syncTeams(job.accountId ? { ...systemScope(context, job.accountId), system: false } : s, true);
       return;
     case 'sample': {
       const as = systemScope(context, job.accountId);

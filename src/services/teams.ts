@@ -7,6 +7,7 @@ import { invalid } from '../domain/errors';
 import { access } from './access';
 import { allTeams, getTeam, upsertTeam } from '../store/records';
 import { graphScope, type Scope } from './scope';
+import { enqueue } from './queue';
 
 const SYNC_KEY = 'teams:synced';
 const SKIP_TYPES = new Set(['product_discovery']);
@@ -36,7 +37,15 @@ const limit = async <T, R>(items: T[], n: number, fn: (t: T) => Promise<R>): Pro
 };
 
 export const syncTeams = async (s: Scope, force = false): Promise<Team[]> => {
-  if (!force && (await kvs.get<boolean>(SYNC_KEY))) return allTeams();
+  if (!force) {
+    if (await kvs.get<boolean>(SYNC_KEY)) return allTeams();
+    const cached = await allTeams();
+    if (cached.length) {
+      await kvs.set(SYNC_KEY, true, { ttl: { value: 6, unit: 'HOURS' } });
+      await enqueue({ kind: 'sync', accountId: s.accountId });
+      return cached;
+    }
+  }
   const projects = (await listProjects(s.as)).filter((p) => !SKIP_TYPES.has(p.type));
   const gs = graphScope(s);
   const graphTeams = new Map<string, Team>();
@@ -127,7 +136,7 @@ export const myTeamIds = async (s: Scope): Promise<string[]> => {
 
 export const pinTeam = async (s: Scope, teamId: string, on: boolean) => {
   if (!s.accountId) return [];
-  if (on && !(await access(s).canActFor(await getTeam(teamId))))
+  if (on && !(await access(s).canActFor(await getTeam(teamId), true)))
     throw invalid('You can only add teams whose space you can create and edit work in.');
   const key = MY_TEAMS(s.accountId);
   const cur = (await kvs.get<string[]>(key)) ?? [];
