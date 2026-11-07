@@ -163,6 +163,9 @@ export const status = guard('commitment-status', async (p: ActionPayload, ctx: I
       commitment: v.commitment,
       forecast: { probabilityPct: pct(v.forecast.probability), p50: v.forecast.dates.p50, p85: v.forecast.dates.p85, basis: v.forecast.basis, itemsAhead: v.forecast.itemsAhead },
       negotiation: v.negotiation ? describeNegotiation(v.negotiation) : null,
+      deliveryEvidence: v.delivery
+        ? { pullRequests: v.delivery.pullRequests.length, deployments: v.delivery.deployments.length, shippedToProduction: v.delivery.shippedToProduction }
+        : null,
       history: v.history.slice(-8),
     };
   }

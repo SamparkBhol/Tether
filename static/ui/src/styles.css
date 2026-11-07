@@ -1536,3 +1536,14 @@ textarea {
   color: var(--ds-text-accent-magenta, #943d73);
   font-weight: 600;
 }
+
+.delivery {
+  margin: var(--ds-space-150, 12px) 0 0;
+  padding: var(--ds-space-100, 8px) var(--ds-space-150, 12px);
+  border-radius: var(--t-radius);
+  background: var(--ds-background-neutral, #091e420f);
+}
+
+.delivery-shipped {
+  background: var(--ds-background-success, #dcfff1);
+}

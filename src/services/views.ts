@@ -17,6 +17,8 @@ import { loadModel } from './model';
 import type { Scope } from './scope';
 import { myTeamIds, requireTeam } from './teams';
 import { access } from './access';
+import { deliveryForIssue } from '../graph/context';
+import { graphScope } from './scope';
 
 const teamIndex = async () => new Map((await allTeams()).map((t) => [t.id, t]));
 
@@ -207,7 +209,10 @@ export const detailView = async (s: Scope, id: string) => {
   const negotiation = isPending(c.state) || c.state === 'at_risk' ? await negotiateFor(item, model, c.id) : null;
   const keys = [c.sourceIssueKey, c.ownerIssueKey].filter((k): k is string => !!k);
   const issues = await getIssues(asApp, keys);
+  const ownerIssue = issues.find((i) => i.key === c.ownerIssueKey);
+  const delivery = ownerIssue && !s.system ? await deliveryForIssue(graphScope(s), ownerIssue.id) : null;
   return {
+    delivery,
     commitment: card(c, teams, mine),
     issues: issues.map((i) => ({ key: i.key, summary: i.summary, status: i.status, statusCategory: i.statusCategory, url: i.url })),
     forecast: {

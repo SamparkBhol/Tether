@@ -34,6 +34,7 @@ interface DetailData {
     to: string;
   }[];
   trend: { date: string; probability: number }[];
+  delivery: { deployments: { name: string; state: string; environment?: string }[]; pullRequests: { name: string; status: string }[]; shippedToProduction: boolean } | null;
 }
 
 const EVENT_WORDS: Record<string, string> = {
@@ -59,6 +60,15 @@ const trendLine = (t: { date: string; probability: number }[]) => {
   const from = pct(t[0].probability);
   const to = pct(t[t.length - 1].probability);
   return from === to ? `Forecast has held at ${to} since ${dayLabel(t[0].date)}.` : `Forecast moved from ${from} on ${dayLabel(t[0].date)} to ${to} today.`;
+};
+
+const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
+
+const deliveryLine = (d: NonNullable<DetailData['delivery']>, key: string | null) => {
+  const parts = [];
+  if (d.pullRequests.length) parts.push(plural(d.pullRequests.length, 'pull request'));
+  if (d.deployments.length) parts.push(plural(d.deployments.length, d.shippedToProduction ? 'deployment, including production,' : 'deployment'));
+  return `From the Teamwork Graph: ${parts.join(' and ')} linked to ${key ?? 'the work'}.`;
 };
 
 export const Detail = ({ id, teamName, onChanged }: { id: string; teamName: (id: string) => string; onChanged: () => void }) => {
@@ -116,7 +126,13 @@ export const Detail = ({ id, teamName, onChanged }: { id: string; teamName: (id:
               onChanged();
             }}
           />
-          <div className="detail-links">
+          {data.delivery && (data.delivery.deployments.length > 0 || data.delivery.pullRequests.length > 0) && (
+        <p className={`delivery ${data.delivery.shippedToProduction ? 'delivery-shipped' : ''}`}>
+          {deliveryLine(data.delivery, c.ownerIssueKey)}
+          {data.delivery.shippedToProduction && c.side === 'owner' && c.actions.includes('deliver') ? ' It looks shipped, so you can mark it delivered.' : ''}
+        </p>
+      )}
+      <div className="detail-links">
             {data.issues.map((i) => (
               <span key={i.key} className="detail-issue">
                 <IssueLink k={i.key} /> {i.summary} <span className="muted">({i.status})</span>
