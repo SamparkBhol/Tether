@@ -26,7 +26,7 @@ Tether gives every team on Jira Cloud the same thing, and adds the part that was
 
 **Keep.** Every change on either side re-runs the forecast. When a promise drops below the team's threshold, Tether works out why (a slower week, more work landing ahead of it, an upstream team running late) and either proposes new terms or, when the only realistic date is far away, puts the options in front of the owning team instead of guessing.
 
-**Deliver.** When the work is done, the promise closes and the team's track record updates, so the next forecast gets a little more honest.
+**Deliver.** Tether shows the pull requests and deployments the Teamwork Graph links to the owning team's work item, and once a production deployment lands it suggests marking the promise delivered. When it closes, the team's track record updates, so the next forecast gets a little more honest.
 
 ## Who can answer for a team
 
@@ -46,9 +46,9 @@ Tether shows up where people already work. It sits in the Jira work item panel a
 
 ## Rovo, MCP and the Teamwork Graph
 
-- **Tether** is a Rovo agent for the asking side. **Tether Desk** helps the owning team answer. Both work through the same actions, and three skills (`raise-ask`, `negotiate-commitment`, `replan-slip`) that any Rovo Studio agent can reuse.
+- **Tether** is a Rovo agent for the asking side. **Tether Desk** helps the owning team answer. Changes such as a new capacity ask the person to confirm first, and the agent then reports the new odds for every promise it moved. Both work through the same actions, and three skills (`raise-ask`, `negotiate-commitment`, `replan-slip`) that any Rovo Studio agent can reuse.
 - The same actions are exposed over `rovo:mcp`, so a coding agent in your editor can check what your team is waiting on or raise an ask while you plan a change.
-- Tether reads the Teamwork Graph for the teams that own each space, the goals a work item serves and the deployments linked to it.
+- Tether reads the Teamwork Graph for the teams that own each space, who belongs to each team, the goals a work item serves and the pull requests and deployments linked to it.
 
 ## Install
 
