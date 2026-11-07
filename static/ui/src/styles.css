@@ -892,7 +892,6 @@ textarea {
   stroke: var(--t-line);
   stroke-width: 2.5;
   stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
 }
 
 .fc-draw {
@@ -1029,4 +1028,14 @@ textarea {
     animation: none;
     stroke-dashoffset: 0;
   }
+}
+
+.policy-preview {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--t-muted);
+}
+
+.policy-odd {
+  color: var(--ds-text-warning, #a54800);
 }

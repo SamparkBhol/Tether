@@ -62,8 +62,16 @@ const PolicyForm = ({ policy, onSaved }: { policy: Policy; onSaved: () => void }
       setBusy(false);
     }
   };
+  const perWeek = p.declaredDailyCapacity * 5;
+  const askWeek = perWeek * p.askShare;
+  const odd = askWeek < 0.5 || askWeek > 40;
   return (
     <form className="policy" onSubmit={(e) => (e.preventDefault(), void save())}>
+      <p className={`policy-preview ${odd ? 'policy-odd' : ''}`}>
+        With no history, these settings mean about <strong>{Math.round(askWeek * 10) / 10}</strong> asks finished a week
+        {askWeek > 0 ? `, so one ask takes roughly ${askWeek >= 1 ? `${Math.max(1, Math.round(5 / askWeek))} working day${Math.round(5 / askWeek) === 1 ? '' : 's'}` : `${Math.round(1 / askWeek)} weeks`}` : ''}.
+        {odd && (askWeek < 0.5 ? ' That is very slow. Every ask to this team will look late.' : ' That is unusually fast. Forecasts will look too rosy.')}
+      </p>
       <label>
         <span>Promise at</span>
         <input type="number" min={50} max={99} value={Math.round(p.targetConfidence * 100)} onChange={(e) => set('targetConfidence', Number(e.target.value) / 100)} />
