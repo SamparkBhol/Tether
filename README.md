@@ -32,6 +32,23 @@ Tether gives every team on Jira Cloud the same thing, and adds the part that was
 
 **Deliver.** Tether shows the pull requests and deployments the Teamwork Graph links to the owning team's work item, and once a production deployment lands it suggests marking the promise delivered. When it closes, the team's track record updates, so the next forecast gets a little more honest.
 
+## Works with what Jira already has
+
+Tether doesn't replace anything a team already uses. It joins up pieces Jira already has and adds the part that was missing, an agreement with odds.
+
+* **Work item links.** The owning team's work is linked to the asking item with the normal Blocks link, and Tether notices when a Blocks link already exists so it doesn't create duplicate work.
+* **Due dates and labels.** The agreed date becomes the due date on the owning team's work item, and everything Tether creates carries the `tether` label, so it shows up in any filter, board or JQL search.
+* **Done work as history.** The forecast reads how many work items each space has really finished, straight from Jira, with nothing to set up.
+* **Comments and email.** Every answer, counter and slip is posted as a Jira comment on both sides and goes out as a normal Jira email.
+* **Space permissions.** Who can answer for a team follows who can create and edit work in its space, together with the Atlassian team it belongs to.
+* **Atlassian Teams and Goals.** Through the Teamwork Graph, asks land with the team that owns the space and goal work goes ahead in the queue.
+* **Plans.** Teams on Jira Premium already see dependencies on a timeline in Plans. Tether adds the agreement, the odds and the warning when a promise slips, and it works on every Jira plan.
+* **Automation, Confluence and Rovo.** Automation rules can call the Tether agents, launch pages in Confluence can show live readiness, and Rovo can answer and act on promises in plain words.
+
+## Why it looks like a timing screen
+
+The board borrows from motorsport timing screens, the kind a race engineer watches during a Formula One race. Every promise is a car on the timing tower, sorted with the most at risk on top. Each team gets its own stripe colour, like a livery. The gap column works like a sector time, showing how far the date Tether is 85% sure of sits from the promised date, purple when comfortably early, green when on pace, yellow when a few days behind and red when well behind. A race team reads one screen to know who is in trouble and why, and a launch lead should be able to do the same.
+
 ## Who can answer for a team
 
 Only people who can create and edit work in a team's Jira space, or who are members of that team in Atlassian, can accept, counter or decline on its behalf. Once you tell Tether which teams you're on, you answer only for those, so an admin or anyone on a site with open spaces doesn't end up speaking for every team. Tether checks this on every action, from the app, a Rovo agent or an MCP client, not just in the UI. When an ask arrives, the space lead and the team's members get a normal Jira email, and if nobody answers within two working days they get one reminder.
