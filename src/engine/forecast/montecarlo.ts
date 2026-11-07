@@ -29,7 +29,7 @@ export interface SimulationResult {
   beyondHorizon: number;
 }
 
-const HORIZON = 260;
+const HORIZON = 780;
 
 const binomial = (rng: Rng, n: number, p: number) => {
   let k = 0;
@@ -58,6 +58,7 @@ export const simulate = (input: SimulationInput): SimulationResult => {
     return d;
   };
   const samples = new Int32Array(trials);
+  const over = new Uint8Array(trials);
   const work = Math.max(1, input.itemsAhead + input.size);
   let beyond = 0;
 
@@ -71,7 +72,10 @@ export const simulate = (input: SimulationInput): SimulationResult => {
       steps++;
       remaining -= draw();
     }
-    if (remaining > 0) beyond++;
+    if (remaining > 0) {
+      beyond++;
+      over[i] = 1;
+    }
     if (input.upstream) {
       const gate = advance(input.upstream.samples[i % input.upstream.samples.length], input.upstream.lagDays);
       if (gate > day) day = gate;
@@ -79,8 +83,10 @@ export const simulate = (input: SimulationInput): SimulationResult => {
     samples[i] = day;
   }
 
-  const sorted = Int32Array.from(samples).sort();
-  const percentile = (q: number) => sorted[Math.min(trials - 1, Math.max(0, Math.ceil(q * trials) - 1))];
+  const finished = Int32Array.from(samples.filter((_, i) => !over[i]));
+  const sorted = (finished.length ? finished : Int32Array.from(samples)).sort();
+  const n = sorted.length;
+  const percentile = (q: number) => sorted[Math.min(n - 1, Math.max(0, Math.ceil(q * n) - 1))];
   let onTime = 0;
   for (const d of sorted) if (d <= input.dueDay) onTime++;
 
@@ -90,7 +96,7 @@ export const simulate = (input: SimulationInput): SimulationResult => {
   const curve: { date: string; probability: number }[] = [];
   let j = 0;
   for (let d = first; d <= last; d += stride) {
-    while (j < trials && sorted[j] <= d) j++;
+    while (j < n && sorted[j] <= d) j++;
     curve.push({ date: fromDay(d), probability: j / trials });
   }
 
@@ -98,7 +104,7 @@ export const simulate = (input: SimulationInput): SimulationResult => {
   const histogram: { date: string; share: number }[] = [];
   for (let start = first, k = 0; start <= last; start += week) {
     let n = 0;
-    while (k < trials && sorted[k] < start + week) {
+    while (k < n && sorted[k] < start + week) {
       n++;
       k++;
     }

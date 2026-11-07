@@ -26,8 +26,16 @@ export const broadcast = async (c: Commitment, kind: string) => {
 
 const pct = (p?: number) => (p === undefined ? 'unknown' : p >= 0.995 ? '99%+' : `${Math.round(p * 100)}%`);
 
-export const day = (iso: string) =>
-  new Date(iso + 'T00:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+export const day = (iso: string) => {
+  const d = new Date(iso.slice(0, 10) + 'T00:00:00Z');
+  return d.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: d.getUTCFullYear() === new Date().getUTCFullYear() ? undefined : 'numeric',
+    timeZone: 'UTC',
+  });
+};
 
 const safeComment = async (as: As, key: string | undefined, body: unknown) => {
   if (!key) return;
