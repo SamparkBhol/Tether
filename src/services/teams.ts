@@ -3,6 +3,8 @@ import type { Team } from '../domain/types';
 import { spacesForTeam, teamsForSpace, teamsOfUser } from '../graph/context';
 import { listProjects, type ProjectLite } from '../jira/projects';
 import { kvKey } from '../lib/util';
+import { invalid } from '../domain/errors';
+import { access } from './access';
 import { allTeams, getTeam, upsertTeam } from '../store/records';
 import { graphScope, type Scope } from './scope';
 
@@ -120,6 +122,8 @@ export const myTeamIds = async (s: Scope): Promise<string[]> => {
 
 export const pinTeam = async (s: Scope, teamId: string, on: boolean) => {
   if (!s.accountId) return [];
+  if (on && !(await access(s).canActFor(await getTeam(teamId))))
+    throw invalid('You can only add teams whose space you can create and edit work in.');
   const key = MY_TEAMS(s.accountId);
   const cur = (await kvs.get<string[]>(key)) ?? [];
   const next = on ? [...new Set([...cur, teamId])] : cur.filter((x) => x !== teamId);

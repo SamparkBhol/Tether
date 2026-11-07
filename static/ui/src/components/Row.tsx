@@ -28,7 +28,9 @@ export const Row = ({ card, perspective, teamName, onChanged, open = false }: Pr
           <span className="row-meta">
             <IssueLink k={perspective === 'owner' ? card.ownerIssueKey ?? card.sourceIssueKey : card.sourceIssueKey} />
             <StateTag state={card.state} />
+            {card.waitingDays >= 2 && <span className="row-age">waiting {card.waitingDays} days</span>}
           </span>
+          {card.waitsOn.length > 0 && <span className="row-after">after {card.waitsOn.map((u) => `${u.owner}: ${u.title}`).join(', ')}</span>}
         </span>
         <span className="row-when">
           <span className="row-date" title={proposing ? `Was ${dayLabel(card.terms.dueDate)}` : undefined}>

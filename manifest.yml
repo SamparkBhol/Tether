@@ -13,8 +13,15 @@ modules:
       resource: ui
       resolver:
         function: resolver
+  jira:issuePanel:
+    - key: tether-issue
+      title: Tether
+      icon: resource:ui;tether.svg
+      resource: ui
+      resolver:
+        function: resolver
   jira:issueContext:
-    - key: tether-panel
+    - key: tether-glance
       title: Tether
       label: Tether
       resource: ui

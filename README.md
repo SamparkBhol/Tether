@@ -26,6 +26,10 @@ Tether gives every team on Jira Cloud the same thing, and adds the part that was
 
 **Deliver.** When the work is done, the promise closes and the team's track record updates, so the next forecast gets a little more honest.
 
+## Who can answer for a team
+
+Only people who can create and edit work in a team's Jira space, or who are members of that team in Atlassian, can accept, counter or decline on its behalf. Tether checks this on every action, not just in the UI. When an ask arrives, the space lead and the team's members get a normal Jira email, and if nobody answers within two working days they get one reminder.
+
 ## The forecast
 
 Tether doesn't ask anyone for estimates. It replays the owning team's real day to day output thousands of times, using the share of their time that usually goes to other teams' asks and whatever is already queued ahead. The chart shows which week each replay finished in and adds them up into the chance of being done by each date. Hover it, or use the arrow keys, to read any day.

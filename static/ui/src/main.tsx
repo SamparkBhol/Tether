@@ -11,6 +11,7 @@ import { Desk } from './views/Desk';
 import { Home } from './views/Home';
 import { Launch, LaunchConfig } from './views/Launch';
 import { Panel } from './views/Panel';
+import { Glance } from './views/Glance';
 
 interface Ctx {
   moduleKey?: string;
@@ -53,7 +54,8 @@ const App = () => {
   const modal = ctx.extension?.modal;
   const issueKey = modal?.issueKey ?? ctx.extension?.issue?.key ?? boot.issueKey ?? '';
   if (modal?.mode === 'ask' || ctx.moduleKey === 'tether-ask') return <Ask boot={boot} issueKey={issueKey} inModal />;
-  if (ctx.moduleKey === 'tether-panel') return <Panel boot={boot} />;
+  if (ctx.moduleKey === 'tether-issue' || ctx.moduleKey === 'tether-panel') return <Panel boot={boot} />;
+  if (ctx.moduleKey === 'tether-glance') return <Glance />;
   if (ctx.moduleKey === 'tether-desk')
     return boot.here ? <Desk boot={boot} teamId={boot.here} onPinned={load} /> : <Problem message="This space isn't linked to a team yet." />;
   return <Home boot={boot} refreshBoot={load} />;

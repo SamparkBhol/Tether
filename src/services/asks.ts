@@ -8,13 +8,14 @@ import { goalWeight } from '../engine/weight';
 import { goalsForIssue } from '../graph/context';
 import { asApp } from '../jira/client';
 import { getIssue, parentChain, type IssueLite } from '../jira/issues';
-import { newId, nowIso, todayIso } from '../lib/util';
+import { log, newId, nowIso, todayIso } from '../lib/util';
 import { insertCommitment, openCommitments } from '../store/commitments';
 import { appendEvent, insertAsk } from '../store/records';
 import { negotiateFor } from './forecasting';
 import { apply } from './lifecycle';
 import { loadModel, type TeamModelView } from './model';
-import { broadcast } from './notify';
+import { broadcast, emailOwners } from './notify';
+import { ownerRecipients } from './recipients';
 import { enqueue } from './queue';
 import { graphScope, type Scope } from './scope';
 import { findTeams, requireTeam, syncTeams, teamForProject } from './teams';
@@ -177,6 +178,9 @@ export const raiseAsk = async (s: Scope, input: AskInput): Promise<{ commitment:
     data: { channel: ask.channel, verdict: d.negotiation.verdict },
   });
   await broadcast(commitment, 'raised');
+  const recipients = await ownerRecipients(s, d.owner, s.accountId);
+  const told = await emailOwners(commitment, d.owner, d.requester.name, recipients, d.detail);
+  log('ask.notified', { id: commitment.id, recipients: told });
 
   const model = await loadModel(d.owner);
   if (shouldAutoAccept(d, model)) {

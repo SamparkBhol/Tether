@@ -12,6 +12,8 @@ import { apply } from './lifecycle';
 import { enqueue } from './queue';
 import type { Scope } from './scope';
 import { syncTeams } from './teams';
+import { listProjects } from '../jira/projects';
+import { draftAsk } from './asks';
 
 interface Manifest {
   issues: string[];
@@ -24,20 +26,33 @@ const LABEL = 'tether-sample';
 const CAL = { workingWeekdays: [1, 2, 3, 4, 5], nonWorkingDates: [] as string[] };
 const inDays = (n: number) => fromDay(addWorkingDays(CAL, toDay(todayIso()), n));
 
-const ROLES: { role: string; pattern: RegExp }[] = [
-  { role: 'legal', pattern: /legal/i },
-  { role: 'platform', pattern: /platform|backend|engineering|dev/i },
-  { role: 'design', pattern: /design|creative|brand/i },
-  { role: 'security', pattern: /secur/i },
+const dateAt = async (s: Scope, sourceIssueKey: string, ownerTeamId: string, size: number, chance: number, floor: number) => {
+  const d = await draftAsk(s, { sourceIssueKey, ownerTeamId, neededBy: inDays(10), size });
+  const hit = d.negotiation.curve.find((p) => p.probability >= chance)?.date ?? inDays(20);
+  const min = inDays(floor);
+  return hit < min ? min : hit;
+};
+
+const ROLES: { role: string; pattern: RegExp; types: string[] }[] = [
+  { role: 'legal', pattern: /legal/i, types: ['business', 'service_desk'] },
+  { role: 'platform', pattern: /platform|backend|engineering|dev/i, types: ['software'] },
+  { role: 'design', pattern: /design|creative|brand/i, types: ['business', 'software'] },
+  { role: 'security', pattern: /secur/i, types: ['software', 'service_desk', 'business'] },
 ];
 
-const pick = (teams: Team[]) => {
+const pick = (teams: Team[], typeOf: Map<string, string>) => {
   const usable = teams.filter((t) => t.spaceKeys.length);
-  const requester = usable.find((t) => /market/i.test(t.name)) ?? usable[0];
+  const kind = (t: Team) => typeOf.get(t.spaceKeys[0]) ?? '';
+  const requester = usable.find((t) => /market/i.test(t.name) && kind(t) !== 'service_desk') ?? usable[0];
   const used = new Set([requester?.id]);
   const owners: Record<string, Team> = {};
-  for (const { role, pattern } of ROLES) {
-    const hit = usable.find((t) => !used.has(t.id) && pattern.test(t.name)) ?? usable.find((t) => !used.has(t.id));
+  for (const { role, pattern, types } of ROLES) {
+    const free = usable.filter((t) => !used.has(t.id));
+    const hit =
+      free.find((t) => pattern.test(t.name) && types[0] === kind(t)) ??
+      free.find((t) => pattern.test(t.name) && types.includes(kind(t))) ??
+      free.find((t) => types[0] === kind(t)) ??
+      free[0];
     if (hit) {
       owners[role] = hit;
       used.add(hit.id);
@@ -64,7 +79,8 @@ export const sampleStatus = async () => (await kvs.get<Manifest>(key())) ?? null
 
 export const createSample = async (s: Scope) => {
   if (await sampleStatus()) throw invalid('The sample launch is already there. Remove it first to make a fresh one.');
-  const { requester, owners } = pick(await syncTeams(s));
+  const typeOf = new Map((await listProjects(s.as)).map((p) => [p.key, p.type]));
+  const { requester, owners } = pick(await syncTeams(s), typeOf);
   if (!requester || Object.keys(owners).length < 2) throw invalid('Tether needs at least three Jira spaces to build a sample launch.');
   const m: Manifest = { issues: [], commitments: [], createdAt: new Date().toISOString() };
   const save = () => kvs.set(key(), m);
@@ -86,7 +102,7 @@ export const createSample = async (s: Scope) => {
       ownerTeamId: owners.legal.id,
       title: 'Review pricing terms and refund wording',
       detail: 'New usage tiers change what customers pay mid-month. We need the terms and the refund section signed off before the page goes live.',
-      neededBy: inDays(12),
+      neededBy: fromDay(addWorkingDays(CAL, toDay(await dateAt(s, pricing, owners.legal.id, 2, 0.95, 4)), 3)),
       size: 2,
     });
     const c = mark(await apply(s, r.commitment.id, { kind: 'accept' }, owner, 'Sample launch'));
@@ -99,7 +115,7 @@ export const createSample = async (s: Scope) => {
       ownerTeamId: owners.platform.id,
       title: 'Metering API for usage tiers',
       detail: 'The upgrade flow needs current usage and a projected bill per workspace. Read only, p95 under 300 ms.',
-      neededBy: inDays(9),
+      neededBy: await dateAt(s, upgrade, owners.platform.id, 3, 0.72, 4),
       size: 3,
     });
     const c = mark(await apply(s, r.commitment.id, { kind: 'accept' }, owner, 'Sample launch'));
@@ -111,7 +127,7 @@ export const createSample = async (s: Scope) => {
           ownerTeamId: owners.security.id,
           title: 'Security review of the metering endpoints',
           detail: 'New public read endpoints with workspace-level data. Needs a review before they ship.',
-          neededBy: inDays(6),
+          neededBy: await dateAt(s, c.ownerIssueKey, owners.security.id, 1, 0.4, 2),
           size: 1,
         });
         const sc = mark(await apply(s, sec.commitment.id, { kind: 'accept' }, owner, 'Sample launch'));
@@ -126,7 +142,7 @@ export const createSample = async (s: Scope) => {
       ownerTeamId: owners.design.id,
       title: 'Launch illustrations and email header',
       detail: 'Four assets in the new brand style. Copy is final.',
-      neededBy: inDays(4),
+      neededBy: await dateAt(s, assets, owners.design.id, 4, 0.55, 3),
       size: 4,
     });
     mark(r.commitment);

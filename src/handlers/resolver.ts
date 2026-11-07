@@ -10,7 +10,8 @@ import { userScope } from '../services/scope';
 import { myTeamIds, pinTeam, syncTeams } from '../services/teams';
 import { deskView, detailView, ledgerView, panelView } from '../services/views';
 import { sampleStatus } from '../services/sample';
-import { savePolicy } from '../store/records';
+import { getTeam, savePolicy } from '../store/records';
+import { access } from '../services/access';
 import { friendly } from './shared';
 
 const resolver = new Resolver();
@@ -103,9 +104,8 @@ def('pin', async (r) => pinTeam(scope(r), r.payload.teamId, !!r.payload.on));
 
 def('policy', async (r) => {
   const s = scope(r);
-  const mine = await myTeamIds(s);
   const p = r.payload.policy as TeamPolicy;
-  if (!mine.includes(p.teamId)) throw invalid('Only members of a team can change its policy.');
+  if (!(await access(s).canActFor(await getTeam(p.teamId)))) throw invalid("Only people who can work in this team's space can change its policy.");
   const saved = await savePolicy(p, s.accountId ?? 'unknown');
   if (!saved) throw invalid('Someone changed this policy a moment ago. Reload and try again.');
   await forgetThroughput(p.teamId);

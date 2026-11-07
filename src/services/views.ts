@@ -9,12 +9,14 @@ import { toQueueItem } from '../engine/propagate/replan';
 import { asApp } from '../jira/client';
 import { getIssue, getIssues } from '../jira/issues';
 import { todayIso, unique } from '../lib/util';
-import { forOwner, forRequester, getCommitment, recent, touchingIssues } from '../store/commitments';
+import { forOwner, forRequester, getCommitment, openCommitments, recent, touchingIssues } from '../store/commitments';
+import { graphFor } from './asks';
 import { allTeams, eventsFor, getAsks, outcomesFor, snapshotsFor } from '../store/records';
 import { commitmentSeed, forecastCommitment, negotiateFor, ownerQueue } from './forecasting';
 import { loadModel } from './model';
 import type { Scope } from './scope';
 import { myTeamIds, requireTeam } from './teams';
+import { access } from './access';
 
 const teamIndex = async () => new Map((await allTeams()).map((t) => [t.id, t]));
 
@@ -44,6 +46,8 @@ const card = (c: Commitment, teams: Map<string, Team>, mine: string[]) => {
     actions: side ? unique([...allowedActions(c, side), ...(both ? allowedActions(c, side === 'owner' ? 'requester' : 'owner') : [])]) : [],
     lateBy: isOpen(c.state) ? Math.max(0, toDay(todayIso()) - toDay(c.terms.dueDate)) : 0,
     forecastP85: c.forecastP85 ?? null,
+    waitingDays: isPending(c.state) ? Math.max(0, toDay(todayIso()) - toDay(c.updatedAt.slice(0, 10))) : 0,
+    waitsOn: [] as { title: string; owner: string; state: string }[],
     delta: c.forecastP85 && (isOpen(c.state) || isPending(c.state)) ? toDay(c.forecastP85) - toDay(c.terms.dueDate) : null,
     updatedAt: c.updatedAt,
   };
@@ -51,12 +55,28 @@ const card = (c: Commitment, teams: Map<string, Team>, mine: string[]) => {
 
 export type Card = ReturnType<typeof card>;
 
+const chain = async (cards: Card[], pool: Commitment[], teams: Map<string, Team>) => {
+  const open = pool.filter((c) => isOpen(c.state));
+  if (open.length < 2 || !cards.length) return cards;
+  const g = await graphFor(open);
+  const byId = new Map(open.map((c) => [c.id, c]));
+  for (const k of cards) {
+    k.waitsOn = (g.upstreamOf.get(k.id) ?? [])
+      .map((u) => byId.get(u))
+      .filter((u): u is Commitment => !!u)
+      .map((u) => ({ title: u.title, owner: teams.get(u.ownerTeamId)?.name ?? 'another team', state: u.state }));
+  }
+  return cards;
+};
+
 export const panelView = async (s: Scope, issueKey: string) => {
   const issue = await getIssue(s.as, issueKey);
   if (!issue) throw notFound(`Work item ${issueKey}`);
-  const [teams, mine, rows] = await Promise.all([teamIndex(), myTeamIds(s), touchingIssues([issueKey])]);
+  const [teams, favs, rows] = await Promise.all([teamIndex(), myTeamIds(s), touchingIssues([issueKey])]);
   const visible = rows.filter((c) => c.state !== 'withdrawn');
+  const mine = await access(s).acting(visible.flatMap((c) => [c.ownerTeamId, c.requesterTeamId]));
   const waitingOn = visible.filter((c) => c.sourceIssueKey === issueKey).map((c) => card(c, teams, mine));
+  await chain(waitingOn, await openCommitments(), teams);
   const promisedTo = visible.filter((c) => c.ownerIssueKey === issueKey).map((c) => card(c, teams, mine));
   const readiness = await readinessFor(waitingOn.filter((c) => isOpen(c.state) || isPending(c.state)).map((c) => c.id));
   return {
@@ -64,7 +84,7 @@ export const panelView = async (s: Scope, issueKey: string) => {
     waitingOn,
     promisedTo,
     readiness,
-    myTeams: mine,
+    myTeams: favs,
   };
 };
 
@@ -97,14 +117,14 @@ export const readinessFor = async (ids: string[]) => {
 
 export const deskView = async (s: Scope, teamId: string) => {
   const team = await requireTeam(teamId);
-  const [teams, mine, inbound, outbound, outcomes] = await Promise.all([
+  const [teams, inbound, outbound, outcomes] = await Promise.all([
     teamIndex(),
-    myTeamIds(s),
     forOwner(teamId, 200),
     forRequester(teamId, 200),
     outcomesFor(teamId),
   ]);
   const model = await loadModel(team);
+  const mine = await access(s).acting([teamId, ...inbound.map((c) => c.requesterTeamId), ...outbound.map((c) => c.ownerTeamId)]);
   const pending = inbound.filter((c) => isPending(c.state));
   const offers = await Promise.all(
     pending.slice(0, 12).map(async (c) => ({
@@ -133,25 +153,26 @@ export const deskView = async (s: Scope, teamId: string) => {
       agentClient: asks.find((a) => a.id === c.askId)?.agentClient ?? null,
       negotiation: offers.find((o) => o.id === c.id)?.negotiation ?? null,
     })),
-    promised: inbound.filter((c) => isOpen(c.state)).map((c) => card(c, teams, mine)),
+    promised: await chain(inbound.filter((c) => isOpen(c.state)).map((c) => card(c, teams, mine)), await openCommitments(), teams),
     asked: outbound.filter((c) => isOpen(c.state) || isPending(c.state)).map((c) => card(c, teams, mine)),
     closed: inbound.filter((c) => !isOpen(c.state) && !isPending(c.state)).slice(0, 20).map((c) => card(c, teams, mine)),
   };
 };
 
 export const ledgerView = async (s: Scope) => {
-  const [teams, mine, rows] = await Promise.all([teamIndex(), myTeamIds(s), recent(400)]);
+  const [teams, favs, rows] = await Promise.all([teamIndex(), myTeamIds(s), recent(400)]);
   const live = rows.filter((c) => c.state !== 'withdrawn' && c.state !== 'declined');
+  const mine = await access(s).acting(live.flatMap((c) => [c.ownerTeamId, c.requesterTeamId]));
   const edges = live
     .filter((c) => isOpen(c.state) || isPending(c.state))
     .map((c) => ({ id: c.id, from: c.ownerTeamId, to: c.requesterTeamId, state: c.state, confidence: c.confidence ?? null }));
   const nodeIds = unique(edges.flatMap((e) => [e.from, e.to]));
   return {
-    myTeams: mine,
+    myTeams: favs,
     teams: [...teams.values()].map(teamLite),
     nodes: nodeIds.map((id) => teamLite(teams.get(id))).filter(Boolean),
     edges,
-    commitments: live.map((c) => card(c, teams, mine)),
+    commitments: await chain(live.map((c) => card(c, teams, mine)), live, teams),
     stats: {
       open: live.filter((c) => isOpen(c.state)).length,
       atRisk: live.filter((c) => c.state === 'at_risk' || c.state === 'renegotiating').length,
@@ -164,7 +185,8 @@ export const ledgerView = async (s: Scope) => {
 export const detailView = async (s: Scope, id: string) => {
   const c = await getCommitment(id);
   if (!c) throw notFound('That commitment');
-  const [teams, mine, events, snapshots] = await Promise.all([teamIndex(), myTeamIds(s), eventsFor(id), snapshotsFor(id)]);
+  const [teams, events, snapshots] = await Promise.all([teamIndex(), eventsFor(id), snapshotsFor(id)]);
+  const mine = await access(s).acting([c.ownerTeamId, c.requesterTeamId]);
   const owner = await requireTeam(c.ownerTeamId);
   const model = await loadModel(owner);
   const queue = await ownerQueue(c.ownerTeamId, c.id);

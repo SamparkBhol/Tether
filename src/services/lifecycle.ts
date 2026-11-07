@@ -7,24 +7,24 @@ import { asApp } from '../jira/client';
 import { createIssue, getIssue, linkBlocks, pickIssueType, setDueDate } from '../jira/issues';
 import { log, newId, nowIso } from '../lib/util';
 import { getCommitment, saveCommitment, setOwnerIssue } from '../store/commitments';
-import { appendEvent, getAsk, recordOutcome } from '../store/records';
+import { appendEvent, getAsk, getTeam, recordOutcome } from '../store/records';
 import { forecastCommitment } from './forecasting';
 import { loadModel } from './model';
 import { broadcast, day, tellCommitted, tellCountered, tellDeclined, tellDelivered, tellRenegotiation } from './notify';
 import { enqueue } from './queue';
 import type { Scope } from './scope';
-import { myTeamIds, requireTeam } from './teams';
+import { requireTeam } from './teams';
+import { access } from './access';
 
 export const sideFor = async (s: Scope, c: Commitment, preferred?: Side): Promise<Side> => {
   if (s.system) return 'system';
-  const mine = await myTeamIds(s);
-  const owner = mine.includes(c.ownerTeamId);
-  const requester = mine.includes(c.requesterTeamId);
+  const acc = access(s);
+  const [owner, requester] = await Promise.all([acc.canActFor(await getTeam(c.ownerTeamId)), acc.canActFor(await getTeam(c.requesterTeamId))]);
   if (preferred === 'owner' && owner) return 'owner';
   if (preferred === 'requester' && requester) return 'requester';
   if (owner) return 'owner';
   if (requester) return 'requester';
-  throw notAllowed('owning or asking', 'change this commitment. Add yourself to one of the two teams in Tether first');
+  throw notAllowed('owning or asking', "change this commitment. You need permission to create and edit work in that team's space");
 };
 
 const ownerWork = async (s: Scope, c: Commitment, owner: Team, requester: Team) => {

@@ -45,6 +45,8 @@ export interface Card {
   lateBy: number;
   forecastP85: string | null;
   delta: number | null;
+  waitingDays: number;
+  waitsOn: { title: string; owner: string; state: string }[];
   updatedAt: string;
 }
 

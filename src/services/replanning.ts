@@ -4,14 +4,16 @@ import { toDay } from '../engine/forecast/calendar';
 import { replan, toQueueItem, type TeamModel } from '../engine/propagate/replan';
 import { asApp } from '../jira/client';
 import { getIssues } from '../jira/issues';
-import { log, nowIso, round, todayIso } from '../lib/util';
+import { kvKey, log, nowIso, round, todayIso } from '../lib/util';
 import { getCommitment, openCommitments, setConfidence } from '../store/commitments';
-import { getTeam, latestInputs, saveSnapshot } from '../store/records';
+import { getAsk, getTeam, latestInputs, saveSnapshot } from '../store/records';
 import { graphFor } from './asks';
 import { negotiateFor } from './forecasting';
 import { apply } from './lifecycle';
 import { loadModel, type TeamModelView } from './model';
-import { broadcast, day, tellEscalation } from './notify';
+import { broadcast, day, emailOwners, tellEscalation } from './notify';
+import { ownerRecipients } from './recipients';
+import { kvs } from '@forge/kvs';
 import { causes, decide, inputsOf, type Inputs } from './diagnose';
 import type { Scope } from './scope';
 
@@ -133,9 +135,18 @@ export const replanAll = async (s: Scope, reason: string) => {
   for (const c of all.filter((x) => isPending(x.state))) {
     const model = views.get(c.ownerTeamId);
     if (!model) continue;
+    const age = today - toDay(c.updatedAt.slice(0, 10));
+    const flag = kvKey('nudged', c.id);
+    if (age >= 2 && !(await kvs.get(flag))) {
+      const requester = await getTeam(c.requesterTeamId);
+      const ask = await getAsk(c.askId);
+      const sent = await emailOwners(c, model.team, requester?.name ?? 'Another team', await ownerRecipients(s, model.team), ask?.detail ?? '', true);
+      if (sent) await kvs.set(flag, true, { ttl: { value: 30, unit: 'DAYS' } });
+    }
     try {
       const n = await negotiateFor(toQueueItem(c), model, c.id);
-      await setConfidence(c.id, round(n.options[0].confidence, 4));
+      const p85 = n.curve.find((pt) => pt.probability >= 0.85)?.date;
+      await setConfidence(c.id, round(n.options[0].confidence, 4), p85);
     } catch (e) {
       log('pending.forecast_failed', { id: c.id, message: (e as Error).message });
     }

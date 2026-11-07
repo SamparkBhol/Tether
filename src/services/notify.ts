@@ -2,6 +2,7 @@ import { publishGlobal } from '@forge/realtime';
 import type { Commitment, Team } from '../domain/types';
 import { bullets, doc, link, mention, paragraph, panel, strong, text } from '../jira/adf';
 import { comment } from '../jira/issues';
+import { jira, route } from '../jira/client';
 import type { As } from '../jira/client';
 import { log } from '../lib/util';
 import type { Option } from '../engine/negotiate/options';
@@ -164,4 +165,44 @@ export const tellEscalation = async (
     );
   await safeComment(as, c.sourceIssueKey, body([text(`"${c.title}" from `), strong(owner.name), text(` is now ${pct(c.confidence)} likely by ${day(c.terms.dueDate)}.`)]));
   await safeComment(as, c.ownerIssueKey, body([text(`${requesterName} needs this by ${day(c.terms.dueDate)}, and it is now ${pct(c.confidence)} likely.`)]));
+};
+
+const esc = (t: string) => t.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]!);
+
+export const emailOwners = async (
+  c: Commitment,
+  owner: Team,
+  requesterName: string,
+  recipients: string[],
+  detail: string,
+  nudge = false,
+) => {
+  const to = [...new Set(recipients.filter(Boolean))].slice(0, 20);
+  if (!to.length) return 0;
+  const subject = nudge
+    ? `Still waiting: ${requesterName} needs "${c.title}" by ${day(c.neededBy)}`
+    : `${requesterName} asked ${owner.name}: ${c.title}, needed by ${day(c.neededBy)}`;
+  const odds = c.confidence !== undefined ? ` Tether puts the asked date at ${pct(c.confidence)} for your team right now.` : '';
+  const text = `${requesterName} needs "${c.title}" from ${owner.name} by ${day(c.neededBy)}.${odds}${detail ? `
+
+${detail}` : ''}
+
+Answer it from Apps > Tether in Jira. You can commit, offer another date or pass with a reason.`;
+  try {
+    await jira<void>({ kind: 'app' }, route`/rest/api/3/issue/${c.sourceIssueKey}/notify`, 'send notification', {
+      method: 'POST',
+      body: {
+        subject,
+        textBody: text,
+        htmlBody: `<p><strong>${esc(requesterName)}</strong> needs <strong>${esc(c.title)}</strong> from ${esc(owner.name)} by <strong>${esc(day(c.neededBy))}</strong>.${esc(odds)}</p>${
+          detail ? `<p>${esc(detail)}</p>` : ''
+        }<p>Answer it from Apps &gt; Tether in Jira. You can commit, offer another date or pass with a reason.</p>`,
+        to: { users: to.map((accountId) => ({ accountId })) },
+      },
+    });
+    return to.length;
+  } catch (e) {
+    log('notify.failed', { id: c.id, message: (e as Error).message });
+    return 0;
+  }
 };

@@ -53,7 +53,13 @@ export const Tower = ({ rows, teamName, onChanged, focus }: Props) => {
                 <span className="t-sub">
                   <span className="t-key">{c.ownerIssueKey ?? c.sourceIssueKey}</span>
                   <span className={`t-state t-state-${c.state}`}>{STATE_LABEL[c.state]}</span>
+                  {c.waitingDays >= 2 && <span className="t-age">waiting {c.waitingDays} days</span>}
                 </span>
+                {c.waitsOn.length > 0 && (
+                  <span className="t-after">
+                    after {c.waitsOn.map((u) => `${u.owner}: ${u.title}`).join(', ')}
+                  </span>
+                )}
               </span>
               <span className="t-wait" role="cell" style={{ ['--stripe' as string]: livery(c.requester?.id) }}>
                 {c.requester?.name ?? teamName('')}
