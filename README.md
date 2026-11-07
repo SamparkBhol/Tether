@@ -1,3 +1,5 @@
+<img src="media/logo.png" width="96" alt="Tether logo">
+
 # Tether
 
 Tether turns "can your team do this for us?" into a date both teams agree on, and keeps that date honest while the work moves.

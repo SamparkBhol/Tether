@@ -75,7 +75,7 @@ const askInput = (p: ActionPayload) => {
 
 export const findTeam = guard('find-team', async (p: ActionPayload, ctx: InvocationContext) => {
   const s = scopeFromAction(p, ctx);
-  const teams = await syncTeams(s);
+  const teams = (await syncTeams(s)).filter((t) => t.spaceKeys.length > 0);
   const mine = await myTeamIds(s);
   const q = str(p.query);
   const hits = q ? findTeams(teams, q) : teams.filter((t) => mine.includes(t.id));

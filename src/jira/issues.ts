@@ -43,7 +43,23 @@ interface RawIssue {
 
 const FIELDS = 'summary,description,status,project,parent,issuetype,assignee,duedate,issuelinks';
 
-const browseUrl = (self: string, key: string) => `${new URL(self).origin}/browse/${key}`;
+let site: string | null = null;
+
+export const siteBase = async (): Promise<string | null> => {
+  if (site) return site;
+  try {
+    const info = await jira<{ baseUrl?: string }>({ kind: 'app' }, route`/rest/api/3/serverInfo`, 'read site address');
+    site = info?.baseUrl?.replace(/\/$/, '') ?? null;
+  } catch {
+    site = null;
+  }
+  return site;
+};
+
+const browseUrl = (self: string, key: string) => {
+  const origin = new URL(self).origin;
+  return origin.includes('api.atlassian.com') && site ? `${site}/browse/${key}` : `${origin}/browse/${key}`;
+};
 
 const lite = (r: RawIssue): IssueLite => ({
   id: r.id,
@@ -70,6 +86,7 @@ const lite = (r: RawIssue): IssueLite => ({
 });
 
 export const getIssue = async (as: As, key: string): Promise<IssueLite | null> => {
+  await siteBase();
   const r = await jiraMaybe<RawIssue>(as, route`/rest/api/3/issue/${key}?fields=${FIELDS}`, `read ${key}`);
   return r ? lite(r) : null;
 };
@@ -94,6 +111,7 @@ const search = async (as: As, jql: string, fields: string, cap: number): Promise
 };
 
 export const getIssues = async (as: As, keys: string[]): Promise<IssueLite[]> => {
+  await siteBase();
   const out: IssueLite[] = [];
   for (const group of chunk([...new Set(keys)], 50)) {
     const rows = await search(as, `key in (${group.map((k) => `"${k}"`).join(',')})`, FIELDS, group.length);

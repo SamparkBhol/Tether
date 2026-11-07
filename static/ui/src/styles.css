@@ -1364,3 +1364,8 @@ textarea {
     display: none;
   }
 }
+
+.home-mark {
+  display: block;
+  margin-right: calc(-1 * var(--ds-space-100, 8px));
+}

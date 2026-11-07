@@ -36,6 +36,7 @@ export const Home = ({ boot, refreshBoot }: { boot: Bootstrap; refreshBoot: () =
   return (
     <div className="home">
       <header className="home-head">
+        <img className="home-mark" src="./tether.svg" alt="" width="28" height="28" />
         <nav className="tabs" role="tablist">
           <button role="tab" aria-selected={tab === 'desk'} onClick={() => setTab('desk')}>
             Your team

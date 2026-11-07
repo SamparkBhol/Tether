@@ -55,7 +55,10 @@ const cleanTitle = (s: string) => s.replace(/\s+/g, ' ').trim().slice(0, 200);
 const resolveOwner = async (s: Scope, input: AskInput, requester: Team) => {
   const teams = await syncTeams(s);
   if (input.ownerTeamId) return { owner: await requireTeam(input.ownerTeamId), alternatives: [] as Team[] };
-  const matches = findTeams(teams, input.ownerQuery ?? '').filter((t) => t.id !== requester.id);
+  const matches = findTeams(
+    teams.filter((t) => t.spaceKeys.length > 0),
+    input.ownerQuery ?? '',
+  ).filter((t) => t.id !== requester.id);
   if (!matches.length) throw invalid(`I could not find a team called "${input.ownerQuery}". Pick one from the list.`);
   return { owner: matches[0], alternatives: matches.slice(1, 5) };
 };
