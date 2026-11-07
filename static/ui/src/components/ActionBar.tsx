@@ -84,6 +84,7 @@ export const ActionBar = ({ card, suggestion, onDone }: Props) => {
     );
   }
 
+  const offer = suggestion && (suggestion.dueDate !== card.terms.dueDate || suggestion.size !== card.terms.size) ? suggestion : null;
   const ownerCanAccept = card.state === 'proposed' && has('accept');
   const requesterCanAccept = card.state === 'countered' && has('accept');
 
@@ -94,7 +95,7 @@ export const ActionBar = ({ card, suggestion, onDone }: Props) => {
           Commit to {dayLabel(card.terms.dueDate)}
         </Button>
       )}
-      {has('counter') && <Button onClick={() => setMode('counter')}>{suggestion ? `Offer ${dayLabel(suggestion.dueDate)}` : 'Counter'}</Button>}
+      {has('counter') && <Button onClick={() => setMode('counter')}>{offer ? `Offer ${dayLabel(offer.dueDate)}` : 'Counter'}</Button>}
       {has('decline') && (
         <Button appearance="subtle" onClick={() => setMode('decline')}>
           Decline

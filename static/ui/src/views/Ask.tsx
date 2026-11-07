@@ -49,10 +49,13 @@ export const Ask = ({ boot, issueKey, inModal }: { boot: Bootstrap; issueKey: st
   const names = useMemo(() => new Map(boot.teams.map((t) => [t.id, t.name])), [boot.teams]);
   const candidates = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const pool = boot.teams.filter((t) => !boot.myTeams.includes(t.id) || boot.teams.length < 3);
+    const space = issueKey.split('-')[0];
+    const pool = boot.teams
+      .filter((t) => !t.spaceKeys.includes(space))
+      .sort((a, b) => Number(boot.myTeams.includes(a.id)) - Number(boot.myTeams.includes(b.id)) || a.name.localeCompare(b.name));
     const hits = q ? pool.filter((t) => t.name.toLowerCase().includes(q) || t.spaceKeys.some((k) => k.toLowerCase() === q)) : pool;
     return hits.slice(0, 8);
-  }, [query, boot]);
+  }, [query, boot, issueKey]);
 
   useEffect(() => {
     if (!owner) return;
@@ -134,7 +137,7 @@ export const Ask = ({ boot, issueKey, inModal }: { boot: Bootstrap; issueKey: st
                   </button>
                 </li>
               ))}
-              {!candidates.length && <li className="muted small">No team matches "{query}".</li>}
+              {!candidates.length && query.trim() && <li className="muted small">No team matches "{query.trim()}".</li>}
             </ul>
           </div>
         ) : (

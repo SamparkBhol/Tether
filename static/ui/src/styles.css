@@ -783,6 +783,7 @@ textarea {
 }
 
 .fc {
+  max-width: 720px;
   margin: var(--ds-space-100, 8px) 0 var(--ds-space-150, 12px);
 }
 
@@ -1210,6 +1211,11 @@ textarea {
   text-overflow: ellipsis;
 }
 
+.t-wait-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .t-title {
   display: flex;
   flex-direction: column;
@@ -1256,6 +1262,22 @@ textarea {
 
 .tower-detail {
   padding: var(--ds-space-100, 8px) var(--ds-space-200, 16px) var(--ds-space-250, 20px) 52px;
+}
+
+.detail {
+  container-type: inline-size;
+}
+
+@container (min-width: 960px) {
+  .detail-body {
+    display: grid;
+    grid-template-columns: minmax(0, 680px) minmax(300px, 1fr);
+    gap: var(--ds-space-300, 24px);
+    align-items: start;
+  }
+  .detail-side > .options:first-child {
+    margin-top: var(--ds-space-100, 8px);
+  }
 }
 
 .done {

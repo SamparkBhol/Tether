@@ -79,7 +79,12 @@ export const requireTeam = async (id: string) => {
   return t;
 };
 
-const words = (s: string) => s.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+const FILLER = new Set(['team', 'teams', 'the', 'squad', 'group', 'dept', 'department', 'and', 'of']);
+const words = (s: string) =>
+  s
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w && !FILLER.has(w));
 
 export const findTeams = (teams: Team[], query: string): Team[] => {
   const q = query.trim().toLowerCase();

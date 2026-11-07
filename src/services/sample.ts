@@ -30,7 +30,8 @@ const dateAt = async (s: Scope, sourceIssueKey: string, ownerTeamId: string, siz
   const d = await draftAsk(s, { sourceIssueKey, ownerTeamId, neededBy: inDays(10), size });
   const hit = d.negotiation.curve.find((p) => p.probability >= chance)?.date ?? inDays(20);
   const min = inDays(floor);
-  return hit < min ? min : hit;
+  const max = inDays(floor + 12);
+  return hit < min ? min : hit > max ? max : hit;
 };
 
 const ROLES: { role: string; pattern: RegExp; types: string[] }[] = [

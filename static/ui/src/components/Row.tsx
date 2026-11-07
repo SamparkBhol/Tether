@@ -11,9 +11,10 @@ interface Props {
   teamName: (id: string) => string;
   onChanged: () => void;
   open?: boolean;
+  linkTo?: 'work' | 'mine';
 }
 
-export const Row = ({ card, perspective, teamName, onChanged, open = false }: Props) => {
+export const Row = ({ card, perspective, teamName, onChanged, open = false, linkTo = 'mine' }: Props) => {
   const [expanded, setExpanded] = useState(open);
   const other = perspective === 'owner' ? card.requester : card.owner;
   const proposing = !!card.pendingTerms && (card.state === 'renegotiating' || card.state === 'countered');
@@ -26,7 +27,7 @@ export const Row = ({ card, perspective, teamName, onChanged, open = false }: Pr
         <span className="row-title">
           <span className="row-name">{card.title}</span>
           <span className="row-meta">
-            <IssueLink k={perspective === 'owner' ? card.ownerIssueKey ?? card.sourceIssueKey : card.sourceIssueKey} />
+            <IssueLink k={perspective === 'owner' || linkTo === 'work' ? (card.ownerIssueKey ?? card.sourceIssueKey) : card.sourceIssueKey} />
             <StateTag state={card.state} />
             {card.waitingDays >= 2 && <span className="row-age">waiting {card.waitingDays} days</span>}
           </span>

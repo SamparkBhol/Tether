@@ -103,12 +103,12 @@ export const simulate = (input: SimulationInput): SimulationResult => {
   const week = 7;
   const histogram: { date: string; share: number }[] = [];
   for (let start = first, k = 0; start <= last; start += week) {
-    let n = 0;
+    let count = 0;
     while (k < n && sorted[k] < start + week) {
-      n++;
+      count++;
       k++;
     }
-    histogram.push({ date: fromDay(start), share: n / trials });
+    histogram.push({ date: fromDay(start), share: count / trials });
   }
   const t = input.throughput;
   const perDay = t && t.counts.length ? t.total / t.counts.length : input.declaredDailyCapacity;

@@ -177,7 +177,7 @@ export const Forecast = (p: Props) => {
   );
 };
 
-const Receipt = ({ inputs, team = 'They', windowEnd }: { inputs: ForecastInputs; team?: string; windowEnd?: string | null }) => {
+const Receipt = ({ inputs, team, windowEnd }: { inputs: ForecastInputs; team?: string; windowEnd?: string | null }) => {
   const perWeek = inputs.perDay * 5;
   const askWeek = perWeek * inputs.askShare;
   const work = inputs.itemsAhead + inputs.size;
@@ -185,13 +185,13 @@ const Receipt = ({ inputs, team = 'They', windowEnd }: { inputs: ForecastInputs;
   const r = (n: number) => (n >= 10 ? Math.round(n) : Math.round(n * 10) / 10);
   const source =
     inputs.basis === 'history'
-      ? `${inputs.days} working days of finished work${windowEnd ? ` up to ${dayLabel(windowEnd)}` : ''}`
-      : 'the capacity the team set';
+      ? `the team's last ${inputs.days} working days of finished work${windowEnd ? ` up to ${dayLabel(windowEnd)}` : ''}`
+      : 'the weekly capacity the team set';
   return (
     <div className="fc-receipt">
       <span className="fc-term">
         <b>{r(perWeek)}</b> item{r(perWeek) === 1 ? '' : 's'} a week
-        <small>{team}'s pace</small>
+        <small>{team ? `${team} pace` : 'their pace'}</small>
       </span>
       <span className="fc-op">×</span>
       <span className="fc-term">
@@ -214,7 +214,7 @@ const Receipt = ({ inputs, team = 'They', windowEnd }: { inputs: ForecastInputs;
         <b>{Number.isFinite(weeks) ? r(weeks) : 'no'}</b> week{weeks === 1 ? '' : 's'} on average
       </span>
       <p className="fc-note">
-        Tether replays {team}'s real day-to-day variation 2,000 times using {source}. The bars show which week each replay finished in, and the line adds them up into the chance of being done by each date.
+        Tether ran 2,000 replays from {source}. Each bar is the share of replays that finished that week, and the line adds them up into the chance of being done by each date.
       </p>
     </div>
   );

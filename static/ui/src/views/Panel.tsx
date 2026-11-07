@@ -63,7 +63,7 @@ export const Panel = ({ boot }: { boot: Bootstrap }) => {
         <>
           <ul className="rows rows-compact">
             {data.waitingOn.map((c) => (
-              <Row key={c.id} card={c} perspective="requester" teamName={teamName} onChanged={reload} />
+              <Row key={c.id} card={c} perspective="requester" teamName={teamName} onChanged={reload} linkTo="work" />
             ))}
           </ul>
           <div className="panel-actions">

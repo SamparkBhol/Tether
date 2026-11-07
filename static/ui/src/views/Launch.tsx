@@ -56,7 +56,7 @@ export const Launch = ({ boot, issueKey }: { boot: Bootstrap; issueKey: string }
       )}
       <ul className="rows">
         {data.waitingOn.map((c) => (
-          <Row key={c.id} card={c} perspective="requester" teamName={(id) => names.get(id) ?? 'another team'} onChanged={reload} />
+          <Row key={c.id} card={c} perspective="requester" teamName={(id) => names.get(id) ?? 'another team'} onChanged={reload} linkTo="work" />
         ))}
       </ul>
     </div>
